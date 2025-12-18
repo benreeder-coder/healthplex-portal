@@ -1020,12 +1020,26 @@ body {
     font-weight: 500;
 }
 
-.note-delete-btn {
+.note-actions {
     position: absolute;
     top: var(--space-sm);
     right: var(--space-sm);
-    width: 24px;
-    height: 24px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: all 0.2s ease;
+}
+
+.note-card:hover .note-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.note-edit-btn,
+.note-delete-btn {
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1034,14 +1048,13 @@ body {
     border-radius: var(--radius-sm);
     color: var(--gray-400);
     cursor: pointer;
-    opacity: 0;
-    transform: scale(0.9);
     transition: all 0.2s ease;
 }
 
-.note-card:hover .note-delete-btn {
-    opacity: 1;
-    transform: scale(1);
+.note-edit-btn:hover {
+    background: var(--teal-pale);
+    border-color: var(--teal-light);
+    color: var(--teal-primary);
 }
 
 .note-delete-btn:hover {

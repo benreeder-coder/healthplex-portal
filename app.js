@@ -116,6 +116,7 @@ let currentUser = null;
 let notes = {};
 let activeStageId = null;
 let fullscreenStageId = null;
+let editingNoteId = null; // Track if we're editing an existing note
 
 // DOM Elements
 const authScreen = document.getElementById('auth-screen');
@@ -845,11 +846,19 @@ function renderStageNotes(stageId) {
 
     container.innerHTML = stageNotes.map(note => `
         <div class="note-card" data-note-id="${note.id}">
-            <button class="note-delete-btn" data-note-id="${note.id}" data-stage-id="${stageId}" title="Delete note">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="note-actions">
+                <button class="note-edit-btn" data-note-id="${note.id}" data-stage-id="${stageId}" title="Edit note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+                <button class="note-delete-btn" data-note-id="${note.id}" data-stage-id="${stageId}" title="Delete note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
             <div class="note-content">${escapeHtml(note.content)}</div>
             <div class="note-meta">
                 <div class="note-author">
@@ -860,6 +869,16 @@ function renderStageNotes(stageId) {
             </div>
         </div>
     `).join('');
+
+    // Add edit handlers
+    container.querySelectorAll('.note-edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const noteId = btn.dataset.noteId;
+            const stageId = btn.dataset.stageId;
+            openEditModal(noteId, stageId);
+        });
+    });
 
     // Add delete handlers
     container.querySelectorAll('.note-delete-btn').forEach(btn => {
@@ -931,11 +950,19 @@ function renderFullscreenNotes(stageId) {
 
     fullscreenContent.innerHTML = stageNotes.map(note => `
         <div class="note-card" data-note-id="${note.id}">
-            <button class="note-delete-btn" data-note-id="${note.id}" data-stage-id="${stageId}" title="Delete note">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="note-actions">
+                <button class="note-edit-btn" data-note-id="${note.id}" data-stage-id="${stageId}" title="Edit note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+                <button class="note-delete-btn" data-note-id="${note.id}" data-stage-id="${stageId}" title="Delete note">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
             <div class="note-content">${escapeHtml(note.content)}</div>
             <div class="note-meta">
                 <div class="note-author">
@@ -946,6 +973,17 @@ function renderFullscreenNotes(stageId) {
             </div>
         </div>
     `).join('');
+
+    // Add edit handlers
+    fullscreenContent.querySelectorAll('.note-edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const noteId = btn.dataset.noteId;
+            const stageId = btn.dataset.stageId;
+            closeFullscreen();
+            setTimeout(() => openEditModal(noteId, stageId), 300);
+        });
+    });
 
     // Add delete handlers
     fullscreenContent.querySelectorAll('.note-delete-btn').forEach(btn => {
@@ -958,13 +996,48 @@ function renderFullscreenNotes(stageId) {
     });
 }
 
-// Open modal
+// Open modal for adding new note
 function openModal(stageId) {
     activeStageId = stageId;
+    editingNoteId = null; // Reset editing state
     const stage = STAGES.find(s => s.id === stageId);
 
+    // Update modal for "Add" mode
+    document.querySelector('.modal-title').textContent = 'Add Note';
     modalStageName.textContent = stage.name;
     noteContent.value = '';
+    modalSave.innerHTML = `
+        <span>Save Note</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+    `;
+    modalOverlay.classList.add('active');
+    noteContent.focus();
+}
+
+// Open modal for editing existing note
+function openEditModal(noteId, stageId) {
+    activeStageId = stageId;
+    editingNoteId = noteId;
+    const stage = STAGES.find(s => s.id === stageId);
+    const note = notes[stageId]?.find(n => n.id === noteId);
+
+    if (!note) {
+        showToast('Error: Note not found');
+        return;
+    }
+
+    // Update modal for "Edit" mode
+    document.querySelector('.modal-title').textContent = 'Edit Note';
+    modalStageName.textContent = stage.name;
+    noteContent.value = note.content;
+    modalSave.innerHTML = `
+        <span>Update Note</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+    `;
     modalOverlay.classList.add('active');
     noteContent.focus();
 }
@@ -973,10 +1046,11 @@ function openModal(stageId) {
 function closeModal() {
     modalOverlay.classList.remove('active');
     activeStageId = null;
+    editingNoteId = null;
     noteContent.value = '';
 }
 
-// Save note
+// Save note (handles both create and update)
 async function saveNote() {
     const supabase = getSupabase();
     const content = noteContent.value.trim();
@@ -999,21 +1073,40 @@ async function saveNote() {
     const authorName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
 
     try {
-        const { data, error } = await supabase
-            .from('notes')
-            .insert({
-                stage_id: activeStageId,
-                content: content,
-                author_id: currentUser.id,
-                author_name: authorName
-            })
-            .select()
-            .single();
+        if (editingNoteId) {
+            // Update existing note
+            const { data, error } = await supabase
+                .from('notes')
+                .update({
+                    content: content,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', editingNoteId)
+                .select()
+                .single();
 
-        if (error) throw error;
+            if (error) throw error;
 
-        closeModal();
-        showToast('Note added successfully');
+            closeModal();
+            showToast('Note updated successfully');
+        } else {
+            // Create new note
+            const { data, error } = await supabase
+                .from('notes')
+                .insert({
+                    stage_id: activeStageId,
+                    content: content,
+                    author_id: currentUser.id,
+                    author_name: authorName
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            closeModal();
+            showToast('Note added successfully');
+        }
     } catch (error) {
         console.error('Error saving note:', error);
         showToast('Error saving note');

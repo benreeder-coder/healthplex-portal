@@ -19,3 +19,5 @@ email.txt
 *.pdf
 init_meeting.txt
 Screenshot*.png
+
+.vercel
