@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:thehealthplex.co)",
+      "Skill(frontend-design:frontend-design)",
+      "Bash(start \"\" \"C:\\\\Users\\\\breed\\\\OneDrive\\\\Desktop\\\\Claude Code UPD\\\\Ryan Healthplex\\\\index.html\")",
+      "Bash(powershell -Command \"Get-Content ''c:\\\\Users\\\\breed\\\\OneDrive\\\\Desktop\\\\Claude Code UPD\\\\Ryan Healthplex\\\\Ryan-Ben-Catchup-8757dc19-9054.json'' | ConvertFrom-Json | Select-Object -ExpandProperty transcript | Select-Object -First 50 | ForEach-Object { $_speaker + '': '' + $_text }\")",
+      "Bash(powershell -Command \"$json = Get-Content ''c:\\\\Users\\\\breed\\\\OneDrive\\\\Desktop\\\\Claude Code UPD\\\\Ryan Healthplex\\\\Ryan-Ben-Catchup-8757dc19-9054.json'' | ConvertFrom-Json; $json.PSObject.Properties.Name\")",
+      "Bash(powershell -Command:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: Healthplex Client Journey Portal\n\n- Collaborative note-taking app for tracking client journey stages\n- Supabase backend with real-time sync\n- 11 journey stages with status tracking\n- User authentication\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo create:*)",
+      "Bash(vercel --version:*)",
+      "Bash(vercel:*)",
+      "Bash(cat:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

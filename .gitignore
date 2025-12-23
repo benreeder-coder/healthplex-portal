@@ -13,11 +13,14 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Transcripts and private docs
-*.json
+# Transcripts and private docs (keep vercel.json)
+*-*.json
 email.txt
 *.pdf
 init_meeting.txt
 Screenshot*.png
+
+# Temp folders
+Forms/
 
 .vercel
