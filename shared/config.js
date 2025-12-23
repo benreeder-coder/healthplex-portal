@@ -7,7 +7,8 @@ const CONFIG = {
   webhooks: {
     newConsultation: 'https://breeder80.app.n8n.cloud/webhook/new-consult',
     familyHistory: 'https://breeder80.app.n8n.cloud/webhook/fam-hist',
-    metabolicAssessment: 'https://breeder80.app.n8n.cloud/webhook/metabolic-assessment'
+    metabolicAssessment: 'https://breeder80.app.n8n.cloud/webhook/metabolic-assessment',
+    intakeWizard: 'https://breeder80.app.n8n.cloud/webhook/intake-wizard'
   },
 
   // Authentication Settings

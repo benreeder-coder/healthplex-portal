@@ -1,0 +1,406 @@
+/**
+ * Intake Wizard Styles
+ * Multi-step wizard UI components
+ */
+
+/* ===== Progress Indicator ===== */
+.wizard-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.wizard-progress-steps {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.wizard-step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.wizard-step-indicator.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.wizard-step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border: 3px solid transparent;
+}
+
+.wizard-step-indicator.completed .wizard-step-number {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.wizard-step-indicator.completed .wizard-step-number::after {
+  content: '\2713';
+}
+
+.wizard-step-indicator.completed .wizard-step-number span {
+  display: none;
+}
+
+.wizard-step-indicator.active .wizard-step-number {
+  background: var(--primary);
+  color: var(--white);
+  border-color: var(--primary-light);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px var(--primary-ghost);
+}
+
+.wizard-step-label {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  margin-top: var(--spacing-xs);
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.wizard-step-indicator.active .wizard-step-label,
+.wizard-step-indicator.completed .wizard-step-label {
+  color: var(--primary);
+}
+
+/* Progress connector lines */
+.wizard-step-connector {
+  flex: 1;
+  height: 3px;
+  background: var(--gray-200);
+  margin: 0 var(--spacing-xs);
+  transition: background 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.wizard-step-connector.completed {
+  background: var(--primary);
+}
+
+/* Mobile progress display */
+.wizard-mobile-progress {
+  display: none;
+  text-align: center;
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.wizard-mobile-progress .step-text {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-sm);
+}
+
+.wizard-mobile-progress .step-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.wizard-mobile-progress .progress-bar {
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  margin-top: var(--spacing-md);
+  overflow: hidden;
+}
+
+.wizard-mobile-progress .progress-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ===== Step Containers ===== */
+.wizard-step {
+  display: none;
+  animation: wizardFadeIn 0.4s ease-out;
+}
+
+.wizard-step.active {
+  display: block;
+}
+
+@keyframes wizardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Navigation Buttons ===== */
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--gray-200);
+  gap: var(--spacing-md);
+}
+
+.wizard-nav .btn-prev {
+  background: var(--white);
+  color: var(--gray-600);
+  border: 2px solid var(--gray-300);
+}
+
+.wizard-nav .btn-prev:hover {
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+}
+
+.wizard-nav .btn-prev:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wizard-nav .btn-next {
+  background: var(--primary);
+  color: var(--white);
+  min-width: 160px;
+}
+
+.wizard-nav .btn-next:hover {
+  background: var(--primary-dark);
+}
+
+.wizard-nav .btn-submit {
+  background: var(--success);
+  color: var(--white);
+  min-width: 200px;
+}
+
+.wizard-nav .btn-submit:hover {
+  background: #059669;
+}
+
+/* Spacer for when prev button is hidden */
+.wizard-nav .nav-spacer {
+  flex: 1;
+}
+
+/* ===== Step Header ===== */
+.wizard-step-header {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--primary-ghost);
+}
+
+.wizard-step-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  color: var(--text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.wizard-step-header p {
+  color: var(--gray-600);
+  font-size: 0.95rem;
+}
+
+/* ===== Review Step ===== */
+.review-section {
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.review-section h4 {
+  font-family: var(--font-display);
+  color: var(--primary);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-label {
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.review-value {
+  color: var(--text);
+  font-weight: 600;
+  text-align: right;
+}
+
+.review-edit-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.review-edit-btn:hover {
+  background: var(--primary-ghost);
+}
+
+/* Score Summary in Review */
+.score-summary {
+  background: var(--primary);
+  color: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+}
+
+.score-summary h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.score-summary .score-value {
+  font-size: 3rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.score-summary .score-interpretation {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: var(--spacing-sm);
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+  .wizard-progress {
+    display: none;
+  }
+
+  .wizard-mobile-progress {
+    display: block;
+  }
+
+  .wizard-nav {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .wizard-nav .btn {
+    width: 100%;
+  }
+
+  .wizard-nav .btn-prev {
+    order: 2;
+  }
+
+  .wizard-nav .btn-next,
+  .wizard-nav .btn-submit {
+    order: 1;
+  }
+
+  .wizard-step-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .review-item {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .review-value {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .wizard-step-header h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* ===== Additional Utility Classes ===== */
+.wizard-intro-box {
+  background: var(--primary-ghost);
+  border-left: 4px solid var(--primary);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.wizard-intro-box p {
+  margin: 0;
+  color: var(--primary-dark);
+}
+
+.wizard-section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-ghost), transparent);
+  margin: var(--spacing-xl) 0;
+}
+
+/* ===== Sticky Headers for Family History Tables ===== */
+.family-history-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.family-history-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.family-history-table thead th {
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
