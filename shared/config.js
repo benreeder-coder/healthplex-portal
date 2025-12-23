@@ -3,11 +3,11 @@
  * Update these values with your actual webhook URLs and settings
  */
 const CONFIG = {
-  // n8n Webhook URLs - Replace with your actual endpoints
+  // n8n Webhook URLs
   webhooks: {
-    newConsultation: 'https://your-n8n-instance.com/webhook/new-consultation',
-    familyHistory: 'https://your-n8n-instance.com/webhook/family-history',
-    metabolicAssessment: 'https://your-n8n-instance.com/webhook/metabolic-assessment'
+    newConsultation: 'https://breeder80.app.n8n.cloud/webhook/new-consult',
+    familyHistory: 'https://breeder80.app.n8n.cloud/webhook/fam-hist',
+    metabolicAssessment: 'https://breeder80.app.n8n.cloud/webhook/metabolic-assessment'
   },
 
   // Authentication Settings
