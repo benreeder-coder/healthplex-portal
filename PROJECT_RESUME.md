@@ -87,12 +87,14 @@ The wizard sends a structured JSON payload with:
 2. Fixed double form submission bug
 3. Added descriptive question text to metabolic payload
 4. Split family history into 2 tables (immediate/extended)
-5. Added sticky headers to family history tables
+5. Added sticky headers to family history tables (teal color)
 6. Moved age/sex from Step 5 to Step 1
 7. Disabled draft saving (always starts fresh)
 8. Removed raw q1-q135 from payload (already in structured data)
 9. Cleaned up repo (removed standalone form folders)
 10. Added vercel.json for trailing slash routing
+11. Removed "save progress" message from welcome (since saving is disabled)
+12. Created personal skill for project resume generation (~/.claude/skills/project-resume/)
 
 ## Known Issues / Future Work
 
