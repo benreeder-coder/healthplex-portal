@@ -1,6 +1,6 @@
 # Healthplex Portal - Project Resume
 
-> Last updated: 2025-12-23
+> Last updated: 2025-12-30
 
 ## Quick Context
 
@@ -66,22 +66,35 @@ webhooks: {
 
 ### Intake Wizard Payload Structure
 The wizard sends a structured JSON payload with:
-- `_meta` - form type, timestamp, duration
+- `_meta` - form type, timestamp, duration, completedSteps
+- `rawData` - all form fields including `spouseAttendanceConfirm: true/false`
 - `contact` - name, email, phone
-- `consultation` - address, demographics, complaints, history, fears, goals
-- `familyHistory` - conditions by family member with summary
-- `metabolicAssessment` - 14 categories with question text + scores, rankings, top concerns
-- `lifestyle` - alcohol, caffeine, exercise, stress
+- `consultation` - address, demographics, complaints, history, fears, goals, commitment scores
+- `familyHistory` - conditions by family member (immediate + extended) with summary
+- `metabolicAssessment` - 14+ categories with question text + scores, rankings, topConcerns, genderSpecific responses
+- `lifestyle` - alcohol, caffeine, exercise, stress, foods
 - `medications` - current meds and supplements
 
 ### Important Code Locations
-- **Double submission fix**: `form-utils.js:338` - skips submit listener for intakeWizard
-- **Metabolic questions map**: `form-utils.js:1-150` - METABOLIC_QUESTIONS constant
+- **Category titles**: `intake-wizard/index.html:762-1085` - All "Category I", "Category II", etc. (no descriptions shown to users)
+- **Progress tracker labels**: `intake-wizard/index.html:93-106` - Step labels (Digestive, Metabolism, Hormones)
+- **Step names for mobile**: `wizard.js:11-21` - stepNames array
+- **Spouse checkbox**: `intake-wizard/index.html:602-607` - Required confirmation checkbox
+- **Score display**: `intake-wizard/index.html:1180-1184` - Single teal score box (duplicate removed from wizard.js)
+- **Metabolic questions map**: `form-utils.js:1-150` - METABOLIC_QUESTIONS constant (still has descriptive names for payload)
 - **Payload builder**: `form-utils.js:755-1120` - buildIntakeWizardPayload()
 - **Wizard navigation**: `wizard.js:130-160` - nextStep/prevStep/goToStep
 - **Draft saving disabled**: `wizard.js:38-40` - clears localStorage on init
 
-## Recent Changes (Dec 23, 2025)
+## Recent Changes (Dec 30, 2025)
+
+1. **Removed category descriptions from metabolic assessment** - Categories now show "Category I", "Category VI", etc. instead of "Category I (Digestion - Colon)", "Category VI (Hypoglycemia)" to prevent subconscious bias in user responses. Backend payload still includes descriptive names for data analysis.
+2. **Renamed progress tracker steps** - "Blood Sugar" → "Metabolism", "Thyroid" → "Hormones" (also updated step headers and navigation buttons)
+3. **Consolidated score displays** - Removed duplicate score summary from review step, kept only the teal "Metabolic Assessment Total Score" box
+4. **Added spouse/SO attendance checkbox** - Required checkbox on Step 3 (Commitment): "By checking this box, I confirm that I understand that (if applicable) my spouse or significant other is expected to attend my Complete Wellness Evaluation..."
+5. **Updated CLAUDE.md** - Improved project documentation with architecture overview, local dev commands, key code locations table
+
+## Previous Changes (Dec 23, 2025)
 
 1. Built complete 8-step intake wizard
 2. Fixed double form submission bug
