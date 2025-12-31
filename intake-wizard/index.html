@@ -97,12 +97,12 @@
         <div class="wizard-step-connector"></div>
         <div class="wizard-step-indicator" data-step="6">
           <div class="wizard-step-number"><span>6</span></div>
-          <div class="wizard-step-label">Blood Sugar</div>
+          <div class="wizard-step-label">Metabolism</div>
         </div>
         <div class="wizard-step-connector"></div>
         <div class="wizard-step-indicator" data-step="7">
           <div class="wizard-step-number"><span>7</span></div>
-          <div class="wizard-step-label">Thyroid</div>
+          <div class="wizard-step-label">Hormones</div>
         </div>
         <div class="wizard-step-connector"></div>
         <div class="wizard-step-indicator" data-step="8">
@@ -599,10 +599,11 @@
             </div>
           </div>
 
-          <div class="info-box" style="background: var(--primary-ghost); border-color: var(--primary);">
-            <p style="margin: 0; color: var(--primary); text-align: center;">
-              <strong>If you are married or in a relationship, please bring your spouse or significant other with you to your appointment.</strong>
-            </p>
+          <div class="form-group" style="margin-top: var(--spacing-xl);">
+            <label class="checkbox-item" style="display: flex; align-items: flex-start; gap: var(--spacing-sm); cursor: pointer;">
+              <input type="checkbox" name="spouseAttendanceConfirm" id="spouseAttendanceConfirm" required style="margin-top: 4px; flex-shrink: 0;">
+              <span style="line-height: 1.5;">By checking this box, I confirm that I understand that (if applicable) my spouse or significant other is expected to attend my Complete Wellness Evaluation with me, and I have made arrangements for them to do so. If anything changes, I will inform The Healthplex as soon as possible so that, if need be, my appointment can be rescheduled.</span>
+            </label>
           </div>
 
           <!-- Navigation -->
@@ -759,7 +760,7 @@
           <!-- Category I: Digestion - Colon -->
           <div id="cat-1" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category I (Digestion - Colon)</h4>
+              <h4 class="category-title">Category I</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -779,7 +780,7 @@
           <!-- Category II: Upper Digestion - Stomach -->
           <div id="cat-2" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category II (Upper Digestion - Stomach)</h4>
+              <h4 class="category-title">Category II</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -795,7 +796,7 @@
           <!-- Category III: Upper Digestion - HCL/Enzymes -->
           <div id="cat-3" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category III (Upper Digestion - HCL/Enzymes)</h4>
+              <h4 class="category-title">Category III</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -812,7 +813,7 @@
           <!-- Category IV: Pancreas/Blood Sugar -->
           <div id="cat-4" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category IV (Pancreas/Blood Sugar)</h4>
+              <h4 class="category-title">Category IV</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -830,7 +831,7 @@
           <!-- Category V: Liver/Gallbladder -->
           <div id="cat-5" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category V (Liver/Gallbladder)</h4>
+              <h4 class="category-title">Category V</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -859,7 +860,7 @@
           <div class="wizard-nav">
             <button type="button" class="btn btn-prev wizard-nav-prev">Previous</button>
             <button type="button" class="btn btn-primary btn-lg wizard-nav-next">
-              Continue to Blood Sugar Assessment
+              Continue to Metabolism Assessment
             </button>
           </div>
         </div>
@@ -869,14 +870,14 @@
         <!-- ============================================ -->
         <div class="wizard-step" data-step="6">
           <div class="wizard-step-header">
-            <h2>Blood Sugar & Adrenal Assessment</h2>
+            <h2>Metabolism & Adrenal Assessment</h2>
             <p>Rate each symptom: 0 = Never, 1 = Rarely, 2 = Sometimes, 3 = Always</p>
           </div>
 
           <!-- Category VI: Hypoglycemia -->
           <div id="cat-6" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category VI (Hypoglycemia)</h4>
+              <h4 class="category-title">Category VI</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -895,7 +896,7 @@
           <!-- Category VII: Insulin Resistance -->
           <div id="cat-7" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category VII (Insulin Resistance)</h4>
+              <h4 class="category-title">Category VII</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -913,7 +914,7 @@
           <!-- Category VIII: Adrenal Hypo -->
           <div id="cat-8" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category VIII (Adrenal - Hypo)</h4>
+              <h4 class="category-title">Category VIII</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -931,7 +932,7 @@
           <!-- Category IX: Adrenal Hyper -->
           <div id="cat-9" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category IX (Adrenal - Hyper)</h4>
+              <h4 class="category-title">Category IX</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -948,7 +949,7 @@
           <div class="wizard-nav">
             <button type="button" class="btn btn-prev wizard-nav-prev">Previous</button>
             <button type="button" class="btn btn-primary btn-lg wizard-nav-next">
-              Continue to Thyroid Assessment
+              Continue to Hormones Assessment
             </button>
           </div>
         </div>
@@ -958,14 +959,14 @@
         <!-- ============================================ -->
         <div class="wizard-step" data-step="7">
           <div class="wizard-step-header">
-            <h2>Thyroid & Hormone Assessment</h2>
+            <h2>Hormone Assessment</h2>
             <p>Rate each symptom: 0 = Never, 1 = Rarely, 2 = Sometimes, 3 = Always</p>
           </div>
 
           <!-- Category X: Thyroid Hypo -->
           <div id="cat-10" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category X (Thyroid - Hypo)</h4>
+              <h4 class="category-title">Category X</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -987,7 +988,7 @@
           <!-- Category XI: Thyroid Hyper -->
           <div id="cat-11" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category XI (Thyroid - Hyper)</h4>
+              <h4 class="category-title">Category XI</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -1004,7 +1005,7 @@
           <!-- Category XII & XIII: Endocrine -->
           <div id="cat-12" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category XII (Endocrine - General)</h4>
+              <h4 class="category-title">Category XII</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -1016,7 +1017,7 @@
 
           <div id="cat-13" class="category-section">
             <div class="category-header">
-              <h4 class="category-title">Category XIII (Endocrine - General)</h4>
+              <h4 class="category-title">Category XIII</h4>
               <span class="category-subtotal">Subtotal: 0</span>
             </div>
             <div class="symptom-list">
@@ -1030,7 +1031,7 @@
           <div class="gender-section male">
             <div id="cat-14" class="category-section">
               <div class="category-header">
-                <h4 class="category-title">Category XIV (Males Only - Prostate)</h4>
+                <h4 class="category-title">Category XIV</h4>
                 <span class="category-subtotal">Subtotal: 0</span>
               </div>
               <div class="symptom-list">
@@ -1043,7 +1044,7 @@
             </div>
             <div id="cat-15" class="category-section">
               <div class="category-header">
-                <h4 class="category-title">Category XV (Males Only - Andropause)</h4>
+                <h4 class="category-title">Category XV</h4>
                 <span class="category-subtotal">Subtotal: 0</span>
               </div>
               <div class="symptom-list">
@@ -1063,7 +1064,7 @@
           <div class="gender-section female">
             <div id="cat-16" class="category-section">
               <div class="category-header">
-                <h4 class="category-title">Category XVI (Females Only - Premenstrual)</h4>
+                <h4 class="category-title">Category XVI</h4>
                 <span class="category-subtotal">Subtotal: 0</span>
               </div>
               <div class="form-row" style="margin-bottom: var(--spacing-md);">
@@ -1082,7 +1083,7 @@
             </div>
             <div id="cat-17" class="category-section">
               <div class="category-header">
-                <h4 class="category-title">Category XVII (Females Only - Menopausal)</h4>
+                <h4 class="category-title">Category XVII</h4>
                 <span class="category-subtotal">Subtotal: 0</span>
               </div>
               <div class="form-row" style="margin-bottom: var(--spacing-md);">

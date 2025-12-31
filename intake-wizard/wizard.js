@@ -15,8 +15,8 @@ const IntakeWizard = {
     'Commitment & Vision',
     'Family History',
     'Digestive Health',
-    'Blood Sugar & Adrenal',
-    'Thyroid & Endocrine',
+    'Metabolism & Adrenal',
+    'Hormones',
     'Review & Submit'
   ],
 
@@ -447,20 +447,6 @@ const IntakeWizard = {
         <button type="button" class="review-edit-btn" onclick="IntakeWizard.goToStep(2)">Edit</button>
       </div>
     `;
-
-    // Add metabolic score summary
-    const grandTotal = document.getElementById('grand-total');
-    if (grandTotal) {
-      const score = grandTotal.textContent || '0';
-      const interpretation = this.getScoreInterpretation(parseInt(score));
-      html += `
-        <div class="score-summary">
-          <h3>Metabolic Assessment Score</h3>
-          <div class="score-value">${score}</div>
-          <div class="score-interpretation">${interpretation}</div>
-        </div>
-      `;
-    }
 
     html += `
       <div class="wizard-intro-box" style="margin-top: var(--spacing-xl);">

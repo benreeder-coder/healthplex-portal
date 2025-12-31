@@ -4,60 +4,83 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This directory contains the **Healthplex Project Portal** - a collaborative web application for tracking notes across the client journey stages, plus meeting transcripts and documentation for the business automation consulting project between Ben Reeder (builderbenai.com) and Ryan Ferns (Ryan Healthplex).
+This is the **Healthplex Client Portal** - a web app for Ryan Ferns' virtual functional medicine practice. Built by Ben Reeder (builderbenai.com). Includes a main portal for tracking client journey notes and an 8-step intake wizard for new clients.
 
-## Portal Application
+## Tech Stack
 
-The portal is a vanilla HTML/CSS/JS web app with Supabase backend:
+- **Frontend**: Vanilla HTML/CSS/JS (no framework)
+- **Backend**: Supabase (PostgreSQL + Realtime + Auth)
+- **Hosting**: Vercel (auto-deploys on push to GitHub)
+- **Webhooks**: n8n (breeder80.app.n8n.cloud)
+- **CRM**: GoHighLevel (GHL)
 
-- **index.html** - Main application (auth screen + journey board)
-- **styles.css** - Healthplex-branded styling (teal color scheme, Marcellus/Montserrat fonts)
-- **app.js** - Application logic (auth, CRUD, real-time subscriptions)
-- **supabase-config.js** - Supabase credentials (must be configured)
-- **README.md** - Setup instructions for Supabase
+## Local Development
 
-### Running the Portal
-1. Configure `supabase-config.js` with Supabase URL and anon key
-2. Run the SQL in README.md to create the `notes` table
-3. Open `index.html` in a browser
+```bash
+# Run locally (any of these work)
+python -m http.server 8080
+# or use VS Code Live Server extension
 
-### Key Files for Modifications
-- Stages are defined in `app.js` (STAGES array at top)
-- Branding colors in `styles.css` (CSS variables at top)
-- Auth and note logic in `app.js`
+# Test URLs
+# Portal: localhost:8080
+# Intake Wizard: localhost:8080/intake-wizard/
+```
 
-## Meeting Transcripts
+Push to GitHub auto-deploys to Vercel.
 
-- **init_meeting.txt** - Initial discovery call transcript (November 25)
-- **Kickoff-Call-between-Ben-Reeder-and-Ryan-Ferns-*.json** - Kickoff meeting transcript
-- **Ryan-Ben-Catchup-*.json** - Follow-up meeting transcript
+## Architecture
+
+### Main Portal (`/`)
+Supabase-backed collaborative note-taking app with real-time sync.
+
+- `index.html` - Auth screen + journey board UI
+- `app.js` - Auth, CRUD, real-time subscriptions, 11 journey stages
+- `styles.css` - Healthplex branding (teal, Marcellus/Montserrat fonts)
+- `supabase-config.js` - Supabase credentials
+
+### Intake Wizard (`/intake-wizard/`)
+8-step client intake form that submits to n8n webhooks.
+
+- `intake-wizard/index.html` - Multi-step form with progress indicator
+- `intake-wizard/wizard.js` - Step navigation, validation, state management
+- `intake-wizard/wizard.css` - Wizard-specific styles
+
+### Shared (`/shared/`)
+- `config.js` - Webhook URLs and settings
+- `form-utils.js` - Form handling, payload building, validation
+- `styles.css` - Shared form styles
+
+## Key Code Locations
+
+| What | Where |
+|------|-------|
+| Journey stages | `app.js:23-112` (STAGES array) |
+| Branding colors | `styles.css` (CSS variables at top) |
+| Webhook URLs | `shared/config.js:8-12` |
+| Metabolic questions | `shared/form-utils.js:1-150` (METABOLIC_QUESTIONS) |
+| Payload builder | `shared/form-utils.js:755-1120` (buildIntakeWizardPayload) |
+| Wizard navigation | `intake-wizard/wizard.js:130-160` (nextStep/prevStep) |
+
+## Webhook Endpoints
+
+```javascript
+webhooks: {
+  newConsultation: 'https://breeder80.app.n8n.cloud/webhook/new-consult',
+  familyHistory: 'https://breeder80.app.n8n.cloud/webhook/fam-hist',
+  metabolicAssessment: 'https://breeder80.app.n8n.cloud/webhook/metabolic-assessment',
+  intakeWizard: 'https://breeder80.app.n8n.cloud/webhook/intake-wizard'
+}
+```
+
+## Live URLs
+
+- **Portal**: healthplex-portal.vercel.app
+- **Intake Wizard**: healthplex-portal.vercel.app/intake-wizard/
 
 ## Business Context
 
-Ryan Healthplex is a virtual functional medicine practice focused on gut health, nutrition, fitness, stress management, and sleep. The project scope involves:
-
-1. **Lead nurturing automation** - Automating follow-up with leads from Meta/Google ads via GoHighLevel
-2. **Form automation** - Triggering intake forms and instructions when consultations are booked
-3. **Asset generation** - Creating personalized meal plans, nutrition protocols, and treatment summaries using AI
-4. **Lab review automation** - Processing extensive diagnostic lab results into client-friendly summaries and treatment plans
-5. **Client support automation** - Drafting responses to client messages using context from their history
-
-## Key Systems
-
-- **GoHighLevel (GHL)** - Primary CRM and automation platform
-- **ChatGPT Projects** - Currently used for per-client context storage (lab results, intake forms, history)
-
-## Sales Funnel
-
+Ryan Healthplex is a virtual functional medicine practice. Sales funnel:
 1. Lead form (Meta/Google ads)
-2. Free 15-minute discovery call
-3. Paid $87 one-hour consultation
-4. $8,000 average six-month comprehensive wellness program
-
-## Working With This Project
-
-When asked to help with this project, you are likely being asked to:
-- Analyze meeting transcripts for action items or requirements
-- Help design automation workflows
-- Draft proposals or documentation
-- Create templates for client communications
+2. Free 15-min discovery call
+3. $87 one-hour consultation (CWE)
+4. $8,000 avg six-month wellness program
