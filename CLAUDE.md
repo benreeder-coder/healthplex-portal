@@ -11,7 +11,7 @@ This is the **Healthplex Client Portal** - a web app for Ryan Ferns' virtual fun
 - **Frontend**: Vanilla HTML/CSS/JS (no framework)
 - **Backend**: Supabase (PostgreSQL + Realtime + Auth)
 - **Hosting**: Vercel (auto-deploys on push to GitHub)
-- **Webhooks**: n8n (breeder80.app.n8n.cloud)
+- **Webhooks**: n8n (healthplex.app.n8n.cloud for intake wizard)
 - **CRM**: GoHighLevel (GHL)
 
 ## Local Development

@@ -1,6 +1,6 @@
 # Healthplex Portal - Project Resume
 
-> Last updated: 2025-12-30
+> Last updated: 2026-01-07
 
 ## Quick Context
 
@@ -86,7 +86,11 @@ The wizard sends a structured JSON payload with:
 - **Wizard navigation**: `wizard.js:130-160` - nextStep/prevStep/goToStep
 - **Draft saving disabled**: `wizard.js:38-40` - clears localStorage on init
 
-## Recent Changes (Dec 30, 2025)
+## Recent Changes (Jan 7, 2026)
+
+1. **Migrated intake wizard to new n8n instance** - Changed webhook from `breeder80.app.n8n.cloud` to `healthplex.app.n8n.cloud/webhook/intake-wizard`. The other three webhooks (newConsultation, familyHistory, metabolicAssessment) remain on the old instance but are decommissioned/unused.
+
+## Previous Changes (Dec 30, 2025)
 
 1. **Removed category descriptions from metabolic assessment** - Categories now show "Category I", "Category VI", etc. instead of "Category I (Digestion - Colon)", "Category VI (Hypoglycemia)" to prevent subconscious bias in user responses. Backend payload still includes descriptive names for data analysis.
 2. **Renamed progress tracker steps** - "Blood Sugar" → "Metabolism", "Thyroid" → "Hormones" (also updated step headers and navigation buttons)
@@ -134,7 +138,8 @@ Ryan Healthplex is a virtual functional medicine practice focused on:
 - **GitHub**: github.com/benreeder-coder/healthplex-portal
 - **Vercel**: Connected to GitHub, auto-deploys on push
 - **Supabase**: Credentials in supabase-config.js
-- **n8n**: breeder80.app.n8n.cloud
+- **n8n (active)**: healthplex.app.n8n.cloud (intake wizard)
+- **n8n (decommissioned)**: breeder80.app.n8n.cloud (old instance, other forms no longer used)
 
 ## How to Continue
 
