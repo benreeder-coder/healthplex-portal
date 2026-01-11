@@ -1,6 +1,6 @@
 # Healthplex Portal - Project Resume
 
-> Last updated: 2026-01-07
+> Last updated: 2026-01-11
 
 ## Quick Context
 
@@ -35,21 +35,22 @@ This is the **Healthplex Client Portal** - a web app for Ryan Ferns' virtual fun
 
 ```
 /
-├── index.html          # Main portal (login + journey board)
-├── app.js              # Portal logic (auth, CRUD, real-time)
-├── styles.css          # Portal styles
-├── supabase-config.js  # Supabase credentials
-├── image.png           # Healthplex logo
+├── index.html            # Main portal (login + journey board)
+├── app.js                # Portal logic (auth, CRUD, real-time)
+├── styles.css            # Portal styles
+├── supabase-config.js    # Supabase credentials
+├── image.png             # Healthplex logo
+├── ghl_body_for_n8n.txt  # GHL field mapping for n8n (copy lines 7-173)
 ├── intake-wizard/
-│   ├── index.html      # 8-step wizard form
-│   ├── wizard.js       # Step navigation, validation
-│   └── wizard.css      # Wizard-specific styles
+│   ├── index.html        # 8-step wizard form
+│   ├── wizard.js         # Step navigation, validation
+│   └── wizard.css        # Wizard-specific styles
 ├── shared/
-│   ├── config.js       # Webhook URLs
-│   ├── form-utils.js   # Form handling, payload building
-│   └── styles.css      # Shared form styles
-├── vercel.json         # Routing config
-└── CLAUDE.md           # AI assistant instructions
+│   ├── config.js         # Webhook URLs
+│   ├── form-utils.js     # Form handling, payload building, sanitization
+│   └── styles.css        # Shared form styles
+├── vercel.json           # Routing config
+└── CLAUDE.md             # AI assistant instructions
 ```
 
 ## Key Technical Details
@@ -81,12 +82,83 @@ The wizard sends a structured JSON payload with:
 - **Step names for mobile**: `wizard.js:11-21` - stepNames array
 - **Spouse checkbox**: `intake-wizard/index.html:602-607` - Required confirmation checkbox
 - **Score display**: `intake-wizard/index.html:1180-1184` - Single teal score box (duplicate removed from wizard.js)
-- **Metabolic questions map**: `form-utils.js:1-150` - METABOLIC_QUESTIONS constant (still has descriptive names for payload)
-- **Payload builder**: `form-utils.js:755-1120` - buildIntakeWizardPayload()
+- **Metabolic questions map**: `form-utils.js:18-169` - METABOLIC_QUESTIONS constant (still has descriptive names for payload)
+- **Sanitization function**: `form-utils.js:178-183` - sanitizeString() replaces `"` with `'` for JSON safety
+- **Payload sanitization**: `form-utils.js:362-370` - sanitizes all rawData strings before payload building
+- **Payload builder**: `form-utils.js:779-1120` - buildIntakeWizardPayload()
 - **Wizard navigation**: `wizard.js:130-160` - nextStep/prevStep/goToStep
 - **Draft saving disabled**: `wizard.js:38-40` - clears localStorage on init
+- **GHL field mapping**: `ghl_body_for_n8n.txt:7-173` - n8n JSON body template for GHL API
 
-## Recent Changes (Jan 7, 2026)
+## Recent Changes (Jan 11, 2026) - GHL Integration
+
+### What We Did
+Built the GoHighLevel (GHL) contact upsert integration via n8n. The workflow:
+1. Receives intake wizard submission at `healthplex.app.n8n.cloud/webhook/intake-wizard`
+2. Looks up contact by email in GHL
+3. If found → Updates existing contact
+4. If not found → Creates new contact
+5. Maps 130+ fields from intake form to GHL custom fields
+
+### Files Created/Modified
+- **`ghl_body_for_n8n.txt`** - Complete JSON body template for n8n HTTP Request nodes. Copy lines 7-173 into the "JSON Body" field (with Expression mode ON) for both Create Contact and Update Contact nodes.
+- **`shared/form-utils.js`** - Added `sanitizeString()` function to escape double quotes in form data (prevents JSON parsing errors, e.g., `6'2"` → `6'2'`)
+
+### n8n Workflow Configuration
+```
+Webhook (Intake Form)
+    → HTTP Request (Lookup by Email)
+    → IF (contacts.length > 0)
+        → TRUE: Update Contact (PUT)
+        → FALSE: Create Contact (POST)
+```
+
+**Lookup Node:**
+- Method: GET
+- URL: `https://rest.gohighlevel.com/v1/contacts/lookup?email={{ $('Intake Form').item.json.body.rawData.email }}`
+- Auth: Header Auth (Healthplex GHL credential)
+
+**Create/Update Nodes:**
+- Create: POST to `https://rest.gohighlevel.com/v1/contacts/`
+- Update: PUT to `https://rest.gohighlevel.com/v1/contacts/{{ $json.contacts[0].id }}`
+- Body: Paste from `ghl_body_for_n8n.txt` (lines 7-173)
+
+### Field Mapping Notes
+- Standard GHL fields: firstName, lastName, email, phone, address1, city, state, postalCode, dateOfBirth
+- All other fields go in `customField` object using GHL custom field keys
+- Metabolic questions (q1-q135) mapped to individual custom fields
+- Gender-specific questions (male: q116-q123, female: q124-q135) use ternary expressions to return empty string when not applicable
+
+### Known Issues - FIELDS THAT DON'T WORK YET
+These need to be debugged in next session:
+
+1. **Gender-specific field paths** - The ternary expressions may still have path issues:
+   ```
+   $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q116']
+   ```
+   Need to verify the actual payload structure matches this path.
+
+2. **Potentially missing metabolic questions** - Some questions may be mapped to wrong category paths. Verify:
+   - `cat-6` through `cat-12` question ranges
+   - Some questions may be numbered differently than expected
+
+3. **Fields showing empty when they have data** - Need to compare actual webhook payload against the n8n expression paths
+
+### How to Debug
+1. Submit test form at `healthplex-portal.vercel.app/intake-wizard/`
+2. Check n8n execution log - look at "Intake Form" node output to see actual payload structure
+3. Compare payload paths with expressions in `ghl_body_for_n8n.txt`
+4. Use n8n's expression editor to test individual field paths
+
+### GHL Custom Fields Required
+All these custom fields must exist in GHL (Settings → Custom Fields) with matching keys:
+- `middle_name`, `occupation`, `employer`, `marital_status`
+- `current_physician`, `current_physician_city`, `referred_by_if_applicable`
+- `height`, `weight`, `main_complaints`, `health_concerns`
+- All the metabolic symptom fields (see ghl_body_for_n8n.txt for full list)
+- Commitment scores, lifestyle questions, etc.
+
+## Previous Changes (Jan 7, 2026)
 
 1. **Migrated intake wizard to new n8n instance** - Changed webhook from `breeder80.app.n8n.cloud` to `healthplex.app.n8n.cloud/webhook/intake-wizard`. The other three webhooks (newConsultation, familyHistory, metabolicAssessment) remain on the old instance but are decommissioned/unused.
 
@@ -115,6 +187,12 @@ The wizard sends a structured JSON payload with:
 
 ## Known Issues / Future Work
 
+### GHL Integration (Priority)
+- [ ] Debug fields that aren't mapping correctly (see "Known Issues - FIELDS THAT DON'T WORK YET" above)
+- [ ] Verify all GHL custom fields exist with correct keys
+- [ ] Test with both male and female form submissions to verify gender-specific fields
+
+### General
 - [ ] Auto-calculate age from birthDate
 - [ ] Add form validation feedback improvements
 - [ ] Consider adding confirmation email on submission

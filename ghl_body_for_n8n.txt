@@ -1,0 +1,208 @@
+==========================================
+PASTE THIS INTO N8N JSON BODY FIELD
+==========================================
+Make sure "Expression" mode is ON (click the toggle)
+Then paste this entire block:
+
+={
+  "firstName": "{{ $('Intake Form').item.json.body.rawData.firstName }}",
+  "lastName": "{{ $('Intake Form').item.json.body.rawData.lastName }}",
+  "email": "{{ $('Intake Form').item.json.body.rawData.email }}",
+  "phone": "{{ $('Intake Form').item.json.body.rawData.phone }}",
+  "address1": "{{ $('Intake Form').item.json.body.rawData.street }}",
+  "city": "{{ $('Intake Form').item.json.body.rawData.city }}",
+  "state": "{{ $('Intake Form').item.json.body.rawData.state }}",
+  "postalCode": "{{ $('Intake Form').item.json.body.rawData.zip }}",
+  "dateOfBirth": "{{ $('Intake Form').item.json.body.rawData.birthDate }}",
+  "tags": ["intake-wizard-completed"],
+  "customField": {
+    "middle_name": "{{ $('Intake Form').item.json.body.rawData.middleName }}",
+    "occupation": "{{ $('Intake Form').item.json.body.rawData.occupation }}",
+    "employer": "{{ $('Intake Form').item.json.body.rawData.employer }}",
+    "marital_status": "{{ $('Intake Form').item.json.body.rawData.maritalStatus }}",
+    "current_physician": "{{ $('Intake Form').item.json.body.rawData.currentPhysician }}",
+    "current_physician_city": "{{ $('Intake Form').item.json.body.rawData.physicianCity }}",
+    "referred_by_if_applicable": "{{ $('Intake Form').item.json.body.rawData.referredBy }}",
+    "height": "{{ $('Intake Form').item.json.body.rawData.height }}",
+    "weight": "{{ $('Intake Form').item.json.body.rawData.weight }}",
+    "main_complaints": "{{ $('Intake Form').item.json.body.rawData.complaint1 }}, {{ $('Intake Form').item.json.body.rawData.complaint2 }}, {{ $('Intake Form').item.json.body.rawData.complaint3 }}, {{ $('Intake Form').item.json.body.rawData.complaint4 }}",
+    "health_concerns": "{{ $('Intake Form').item.json.body.rawData.complaint1 }}",
+    "any_other_complaints": "{{ $('Intake Form').item.json.body.rawData.otherComplaints }}",
+    "how_long_have_you_suffered_with_this_problem": "{{ $('Intake Form').item.json.body.rawData.problemDuration }}",
+    "what_have_you_tried_doing_to_resolve_this_problem_that_did_not_work": "{{ $('Intake Form').item.json.body.rawData.triedNotWorked }}",
+    "have_you_become_discouraged_or_stressed_about_handling_this_problem": "{{ $('Intake Form').item.json.body.rawData.discouraged }}",
+    "when_your_problem_is_at_its_worst_how_does_it_make_you_feel": "{{ $('Intake Form').item.json.body.rawData.worstFeeling }}",
+    "what_effect_does_this_have_on_your_body_functions": "{{ $('Intake Form').item.json.body.rawData.bodyFunctions }}",
+    "work": "{{ $('Intake Form').item.json.body.rawData.impact_work }}",
+    "family": "{{ $('Intake Form').item.json.body.rawData.impact_family }}",
+    "hobbies": "{{ $('Intake Form').item.json.body.rawData.impact_hobbies }}",
+    "life": "{{ $('Intake Form').item.json.body.rawData.impact_life }}",
+    "when_its_at_its_worst_how_much_older_does_this_make_you_feel": "{{ $('Intake Form').item.json.body.rawData.feelsOlder }}",
+    "how_did_the_previous_methods_work_for_you": "{{ $('Intake Form').item.json.body.rawData.previousMethodsResults }}",
+    "where_do_you_picture_yourself_being_in_the_next_3_5_years_if_this_problem_is_not_taken_care_of_please_be_specific": "{{ $('Intake Form').item.json.body.rawData.futureWithoutHelp }}",
+    "if_we_were_to_sit_down_and_discuss_your_life_3_years_from_now_and_look_back_at_today_what_would_have_to_have_happened_for_you_to_be_happy_with_your_progress_please_take_your_time_and_dont_sell_yourself_short_include_anything_that_is_part_of_your_happiness_whether_health_family_work_finances_travel_marriage_or_bucket_list": "{{ $('Intake Form').item.json.body.rawData.threeYearVision }}",
+    "what_potential_barriers_do_you_foresee_that_would_prevent_these_things_from_happening": "{{ $('Intake Form').item.json.body.rawData.barriers }}",
+    "do_you_feel_it_is_possible_to_eliminate_or_prevent_these_potential_barriers": "{{ $('Intake Form').item.json.body.rawData.overcomingBarriers }}",
+    "what_are_your_strengths_that_will_enable_you_to_accomplish_your_goals": "{{ $('Intake Form').item.json.body.rawData.strengths }}",
+    "how_important_is_it_for_you_to_resolve_your_health_concerns": "{{ $('Intake Form').item.json.body.consultation.commitment.importance }}",
+    "do_you_feel_that_you_are_coachable_and_would_enjoy_a_mentor_in_helping_you": "{{ $('Intake Form').item.json.body.consultation.commitment.coachable }}",
+    "are_you_prepared_to_make_the_appropriate_lifestyle_changes_that_may_be_necessary_in_order_to_achieve_your_goals": "{{ $('Intake Form').item.json.body.consultation.commitment.prepared }}",
+    "how_many_alcoholic_beverages_do_you_consume_per_week": "{{ $('Intake Form').item.json.body.rawData.alcohol_per_week }}",
+    "how_many_caffeinated_beverages_do_you_consume_per_day": "{{ $('Intake Form').item.json.body.rawData.caffeine_per_day }}",
+    "how_many_times_do_you_eat_out_per_week": "{{ $('Intake Form').item.json.body.rawData.eat_out_per_week }}",
+    "how_many_times_a_week_do_you_work_out": "{{ $('Intake Form').item.json.body.rawData.workout_per_week }}",
+    "do_you_smoke": "{{ $('Intake Form').item.json.body.rawData.smoke }}",
+    "rate_your_levels_of_stress_on_a_scale_of_1_to_10_during_the_average_week": "{{ $('Intake Form').item.json.body.rawData.stress_level }}",
+    "list_the_three_worst_foods_you_eat_during_the_average_week": "{{ $('Intake Form').item.json.body.rawData.worst_food_1 }}, {{ $('Intake Form').item.json.body.rawData.worst_food_2 }}, {{ $('Intake Form').item.json.body.rawData.worst_food_3 }}",
+    "list_the_three_healthiest_foods_you_eat_during_the_average_week": "{{ $('Intake Form').item.json.body.rawData.healthy_food_1 }}, {{ $('Intake Form').item.json.body.rawData.healthy_food_2 }}, {{ $('Intake Form').item.json.body.rawData.healthy_food_3 }}",
+    "please_list_any_medications_you_currently_take_and_for_what_conditions": "{{ $('Intake Form').item.json.body.rawData.medications }}",
+    "please_list_any_natural_supplements_you_currently_take_and_for_what_conditions": "{{ $('Intake Form').item.json.body.rawData.supplements }}",
+    "feeling_that_bowels_do_not_empty_completely": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q1.score }}",
+    "lower_abdominal_pain_relieved_by_passing_stool_or_gas": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q2.score }}",
+    "alternating_constipation_and_diarrhea": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q3.score }}",
+    "diarrhea": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q4.score }}",
+    "constipation": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q5.score }}",
+    "hard_dry_or_small_stool": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q6.score }}",
+    "coated_tongue_or_fuzzy_debris_on_tongue": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q7.score }}",
+    "pass_large_amount_of_foul_smelling_gas": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q8.score }}",
+    "more_than_3_bowel_movements_daily": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q9.score }}",
+    "use_laxatives_frequently": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-1'].responses.q10.score }}",
+    "excessive_belching_burping_or_bloating": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-2'].responses.q11.score }}",
+    "gas_immediately_following_a_meal": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-2'].responses.q12.score }}",
+    "offensive_breath": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-2'].responses.q13.score }}",
+    "difficult_bowel_movement": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-2'].responses.q14.score }}",
+    "sense_of_fullness_during_and_after_meals": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-2'].responses.q15.score }}",
+    "difficulty_digesting_fruits_and_vegetables_undigested_food_found_in_stools": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-2'].responses.q16.score }}",
+    "stomach_pain_burning_or_aching_one_to_four_hours_after_eating": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q17.score }}",
+    "use_antacids": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q18.score }}",
+    "feel_hungry_an_hour_or_two_after_eating": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q19.score }}",
+    "heartburn_when_lying_down_or_bending_forward": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q20.score }}",
+    "temporary_relief_by_using_antacids_food_milk_or_carbonated_beverages": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q21.score }}",
+    "digestive_problems_subside_with_rest_and_relaxation": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q22.score }}",
+    "heartburn_due_to_spicy_foods_chocolate_citrus_peppers_alcohol_and_caffeine": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-3'].responses.q23.score }}",
+    "roughage_and_fiber_cause_constipation": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q24.score }}",
+    "indigestion_and_fullness_last_two_to_four_hours_after_eating": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q25.score }}",
+    "pain_tenderness_soreness_on_left_side_under_rib_cage": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q26.score }}",
+    "excessive_passage_of_gas": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q27.score }}",
+    "nausea_and_or_vomiting": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q28.score }}",
+    "stool_undigested_foul_smelling_mucous_like_greasy_or_poorly_formed": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q29.score }}",
+    "frequent_urination": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q30.score }}",
+    "increased_thirst_and_appetite": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-4'].responses.q31.score }}",
+    "greasy_or_high_fat_foods_cause_distress": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q32.score }}",
+    "lower_bowel_gas_and_or_bloating_several_hours_after_eating": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q33.score }}",
+    "bitter_metallic_taste_in_mouth_especially_in_the_morning": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q34.score }}",
+    "burpy_fishy_taste_after_consuming_fish_oils": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q35.score }}",
+    "difficulty_losing_weight": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q36.score }}",
+    "unexplained_itchy_skin": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q37.score }}",
+    "yellowish_cast_to_eyes": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q38.score }}",
+    "stool_color_alternates_from_clay_colored_to_normal_brown": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q39.score }}",
+    "reddened_skin_especially_palms": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q40.score }}",
+    "dry_or_flaky_skin_and_or_hair": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q41.score }}",
+    "history_of_gallbladder_attacks_or_stones": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-5'].responses.q42.score }}",
+    "have_you_had_your_gallbladder_removed": "{{ $('Intake Form').item.json.body.metabolicAssessment.gallbladderRemoved }}",
+    "crave_sweets_during_the_day": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q44.score }}",
+    "irritable_if_meals_are_missed": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q45.score }}",
+    "depend_on_coffee_to_keep_going_get_started": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q46.score }}",
+    "get_light_headed_if_meals_are_missed": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q47.score }}",
+    "eating_relieves_fatigue": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q48.score }}",
+    "feel_shaky_jittery_or_have_tremors": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q49.score }}",
+    "agitated_easily_upset_nervous": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q50.score }}",
+    "poor_memory_forgetful": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q51.score }}",
+    "blurred_vision": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-6'].responses.q52.score }}",
+    "fatigue_after_meals": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-7'].responses.q53.score }}",
+    "eating_sweets_does_not_relieve_cravings_for_sugar": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-7'].responses.q55.score }}",
+    "must_have_sweets_after_meals": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-7'].responses.q56.score }}",
+    "waist_girth_is_equal_or_larger_than_hip_girth": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-7'].responses.q57.score }}",
+    "cannot_stay_asleep": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q61.score }}",
+    "crave_salt": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q62.score }}",
+    "slow_starter_in_the_morning": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q63.score }}",
+    "afternoon_fatigue": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q64.score }}",
+    "dizziness_when_standing_up_quickly": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q65.score }}",
+    "afternoon_headaches": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q66.score }}",
+    "headaches_with_exertion_or_stress": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q67.score }}",
+    "weak_nails": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-8'].responses.q68.score }}",
+    "cannot_fall_asleep": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-9'].responses.q69.score }}",
+    "perspire_easily": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-9'].responses.q70.score }}",
+    "under_high_amount_of_stress": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-9'].responses.q71.score }}",
+    "weight_gain_when_under_stress": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-9'].responses.q72.score }}",
+    "wake_up_tired_even_after_six_or_more_hours_of_sleep": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-9'].responses.q73.score }}",
+    "excessive_perspiration_or_perspiration_with_little_or_no_activity": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-9'].responses.q74.score }}",
+    "tired_sluggish": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q75.score }}",
+    "feel_cold_hands_feet_all_over": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q76.score }}",
+    "require_excessive_amounts_of_sleep_to_function_properly": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q77.score }}",
+    "increase_in_weight_even_with_low_calorie_diet": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q78.score }}",
+    "gain_weight_easily": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q79.score }}",
+    "difficult_infrequent_bowel_movements": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q80.score }}",
+    "depression_lack_of_motivation": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q81.score }}",
+    "morning_headaches_that_wear_off_as_the_day_progresses": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q82.score }}",
+    "outer_third_of_eyebrow_thins": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q83.score }}",
+    "thinning_of_hair_on_scalp_face_or_genitals_or_excessive_hair_loss": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q84.score }}",
+    "dryness_of_skin_and_or_scalp": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q85.score }}",
+    "mental_sluggishness": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-10'].responses.q86.score }}",
+    "heart_palpitations": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q87.score }}",
+    "inward_trembling": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q88.score }}",
+    "increased_pulse_even_at_rest": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q89.score }}",
+    "nervous_and_emotional": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q90.score }}",
+    "insomnia": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q91.score }}",
+    "night_sweats": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q92.score }}",
+    "difficulty_gaining_weight": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-11'].responses.q93.score }}",
+    "diminished_sex_drive": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-12'].responses.q94.score }}",
+    "unexplained_weight_gain": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-12'].responses.q97.score }}",
+    "menstrual_disorders_or_lack_of_menstruation": "{{ $('Intake Form').item.json.body.metabolicAssessment.categories['cat-12'].responses.q99.score }}",
+    "decreased_libido": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q116'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q116'].score : '' }}",
+    "decreased_fullness_of_erections": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q117'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q117'].score : '' }}",
+    "decreased_mental_sharpness": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q118'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q118'].score : '' }}",
+    "decreased_physical_stamina": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q119'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q119'].score : '' }}",
+    "decreased_urine_flow": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q120'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q120'].score : '' }}",
+    "urination_difficulty_or_dribbling": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q121'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q121'].score : '' }}",
+    "increase_in_fat_distribution_around_chest_and_hips": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q122'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q122'].score : '' }}",
+    "prostate_problems": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q123'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q123'].score : '' }}",
+    "pms": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q124'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q124'].score : '' }}",
+    "mood_swings": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q125'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q125'].score : '' }}",
+    "breast_pain_and_swelling_during_menses": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q126'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q126'].score : '' }}",
+    "bloating_before_period": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q127'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q127'].score : '' }}",
+    "heavy_menstrual_flow": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q128'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q128'].score : '' }}",
+    "pain_and_cramping_during_periods": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q129'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q129'].score : '' }}",
+    "hot_flashes": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q130'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q130'].score : '' }}",
+    "night_sweats_female": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q131'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q131'].score : '' }}",
+    "increased_vaginal_pain_dryness_or_itching": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q132'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q132'].score : '' }}",
+    "disinterest_in_sex": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q133'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q133'].score : '' }}",
+    "irregular_periods": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q134'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q134'].score : '' }}",
+    "depression_mood_changes": "{{ $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q135'] ? $('Intake Form').item.json.body.metabolicAssessment.genderSpecific.responses['q135'].score : '' }}"
+  }
+}
+
+
+==========================================
+NODE SETTINGS (configure manually)
+==========================================
+
+CREATE CONTACT NODE:
+- Method: POST
+- URL: https://rest.gohighlevel.com/v1/contacts/
+- Authentication: Header Auth (use your Healthplex GHL credential)
+- Body Content Type: JSON
+- Specify Body: JSON
+- JSON Body: [paste the expression above]
+
+UPDATE CONTACT NODE:
+- Method: PUT
+- URL: =https://rest.gohighlevel.com/v1/contacts/{{ $json.contacts[0].id }}
+  (this is an expression - toggle expression mode ON)
+- Authentication: Header Auth (use your Healthplex GHL credential)
+- Body Content Type: JSON
+- Specify Body: JSON
+- JSON Body: [paste the same expression above]
+
+==========================================
+NOTES
+==========================================
+
+Gender-specific questions use ternary expressions to check if the
+question exists before accessing the score. Returns empty string
+when not present (for the opposite gender).
+
+Male questions (q116-q123): Only populated for male patients
+Female questions (q124-q135): Only populated for female patients
+
+==========================================

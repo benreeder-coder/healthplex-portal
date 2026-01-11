@@ -170,6 +170,30 @@ const METABOLIC_QUESTIONS = {
 
 const FormUtils = {
   /**
+   * Sanitize string values for JSON compatibility
+   * Replaces double quotes with single quotes to prevent JSON parsing issues
+   * @param {*} value - Value to sanitize
+   * @returns {string} - Sanitized string
+   */
+  sanitizeString(value) {
+    if (value === null || value === undefined) return '';
+    const str = String(value);
+    // Replace double quotes with single quotes (e.g., 6'2" becomes 6'2')
+    // This prevents JSON parsing issues when n8n interpolates values
+    return str.replace(/"/g, "'");
+  },
+
+  /**
+   * Get sanitized value from data object
+   * @param {object} data - Data object
+   * @param {string} key - Key to get
+   * @returns {string} - Sanitized value or empty string
+   */
+  getSanitized(data, key) {
+    return this.sanitizeString(data[key] || '');
+  },
+
+  /**
    * Initialize form with common functionality
    */
   init(formId, webhookKey) {
@@ -333,14 +357,26 @@ const FormUtils = {
    * Build a structured payload with clearly defined variables for GHL/n8n
    */
   buildStructuredPayload(rawData) {
+    // Sanitize all string values in rawData to prevent JSON parsing issues
+    // (e.g., 6'2" becomes 6'2' so quotes don't break JSON)
+    const sanitizedRawData = {};
+    for (const key in rawData) {
+      const value = rawData[key];
+      if (typeof value === 'string') {
+        sanitizedRawData[key] = this.sanitizeString(value);
+      } else {
+        sanitizedRawData[key] = value;
+      }
+    }
+
     // For intakeWizard, filter out q1-q999 fields (already structured in metabolicAssessment)
-    let filteredRawData = rawData;
+    let filteredRawData = sanitizedRawData;
     if (this.webhookKey === 'intakeWizard') {
       filteredRawData = {};
-      for (const key in rawData) {
+      for (const key in sanitizedRawData) {
         // Skip q1, q2, ... q999 fields (metabolic questions)
         if (!/^q\d+$/.test(key)) {
-          filteredRawData[key] = rawData[key];
+          filteredRawData[key] = sanitizedRawData[key];
         }
       }
     }
@@ -356,19 +392,19 @@ const FormUtils = {
       rawData: filteredRawData // Include raw data for flexibility
     };
 
-    // Build form-specific structured data
+    // Build form-specific structured data (using sanitized data)
     switch (this.webhookKey) {
       case 'newConsultation':
-        this.buildConsultationPayload(payload, rawData);
+        this.buildConsultationPayload(payload, sanitizedRawData);
         break;
       case 'familyHistory':
-        this.buildFamilyHistoryPayload(payload, rawData);
+        this.buildFamilyHistoryPayload(payload, sanitizedRawData);
         break;
       case 'metabolicAssessment':
-        this.buildMetabolicPayload(payload, rawData);
+        this.buildMetabolicPayload(payload, sanitizedRawData);
         break;
       case 'intakeWizard':
-        this.buildIntakeWizardPayload(payload, rawData);
+        this.buildIntakeWizardPayload(payload, sanitizedRawData);
         break;
     }
 
