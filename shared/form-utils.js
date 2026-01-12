@@ -1354,24 +1354,35 @@ const FormUtils = {
    * Show success message
    */
   showSuccess() {
-    // Hide form
+    // Hide any wizard loading overlay
+    if (window.IntakeWizard && typeof IntakeWizard.hideLoadingOverlay === 'function') {
+      IntakeWizard.hideLoadingOverlay();
+    }
+
+    // Hide form and any wizard UI elements
     this.form.style.display = 'none';
+
+    // Hide wizard-specific elements (progress bar, etc.)
+    const wizardElements = document.querySelectorAll('.wizard-progress, .wizard-mobile-progress');
+    wizardElements.forEach(el => el.style.display = 'none');
 
     // Show success screen
     const successHtml = `
-      <div class="success-screen">
-        <div class="success-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="success-screen" style="text-align: center; padding: 60px 20px;">
+        <div class="success-icon" style="width: 80px; height: 80px; margin: 0 auto 30px; background: #1a9ba0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white" width="40" height="40">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2>Thank You!</h2>
-        <p>Your form has been submitted successfully.</p>
-        <p>We will review your information and be in touch soon.</p>
+        <h2 style="font-family: 'Marcellus', serif; font-size: 32px; color: #1a9ba0; margin-bottom: 15px;">Thank You!</h2>
+        <p style="font-size: 18px; color: #333; margin-bottom: 10px;">Your intake form has been submitted successfully.</p>
+        <p style="font-size: 16px; color: #666;">The Healthplex team will review your information and be in touch soon.</p>
       </div>
     `;
 
     const successDiv = document.createElement('div');
+    successDiv.className = 'form-card';
+    successDiv.style.cssText = 'max-width: 600px; margin: 40px auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);';
     successDiv.innerHTML = successHtml;
     this.form.parentNode.appendChild(successDiv);
 
@@ -1383,6 +1394,11 @@ const FormUtils = {
    * Show error message
    */
   showError(message) {
+    // Hide any wizard loading overlay
+    if (window.IntakeWizard && typeof IntakeWizard.hideLoadingOverlay === 'function') {
+      IntakeWizard.hideLoadingOverlay();
+    }
+
     // Remove existing alert
     const existingAlert = this.form.querySelector('.alert-error');
     if (existingAlert) existingAlert.remove();
