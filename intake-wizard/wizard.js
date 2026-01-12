@@ -472,16 +472,20 @@ const IntakeWizard = {
    * Returns base64 encoded PDF string
    */
   async generateFormPDF() {
-    // Create a hidden container for PDF generation (off-screen)
+    // Create container positioned behind loading overlay (visible but covered)
     const pdfContainer = document.createElement('div');
     pdfContainer.id = 'pdf-render-container';
     pdfContainer.style.cssText = `
       position: fixed;
-      left: -9999px;
+      left: 0;
       top: 0;
       width: 800px;
+      height: 100vh;
+      overflow: auto;
       background: white;
-      z-index: -1;
+      z-index: 9999;
+      padding: 0;
+      margin: 0;
     `;
     document.body.appendChild(pdfContainer);
 
@@ -489,12 +493,26 @@ const IntakeWizard = {
     const formCard = document.querySelector('.form-card');
     const clonedCard = formCard.cloneNode(true);
 
+    // Reset positioning on cloned card
+    clonedCard.style.cssText = `
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 20px !important;
+      box-shadow: none !important;
+      position: relative !important;
+      left: 0 !important;
+      top: 0 !important;
+    `;
+
     // Show all wizard steps in the clone (except step 8)
     const allSteps = clonedCard.querySelectorAll('.wizard-step');
     allSteps.forEach((step, idx) => {
       if (idx < allSteps.length - 1) {
         step.classList.add('active');
         step.style.display = 'block';
+        step.style.position = 'relative';
+        step.style.left = '0';
       } else {
         step.style.display = 'none';
       }
@@ -580,20 +598,29 @@ const IntakeWizard = {
     `;
     document.head.appendChild(pdfStyles);
 
+    // Scroll the container to top to ensure proper capture
+    pdfContainer.scrollTop = 0;
+
+    // Wait for rendering to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Configure PDF options
     const opt = {
       margin: [10, 10, 10, 10],
       filename: `intake-form-${Date.now()}.pdf`,
       image: { type: 'jpeg', quality: 0.92 },
       html2canvas: {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         letterRendering: true,
         scrollX: 0,
         scrollY: 0,
+        x: 0,
+        y: 0,
         windowWidth: 800,
-        width: 800,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
+        removeContainer: false
       },
       jsPDF: {
         unit: 'mm',
@@ -607,8 +634,8 @@ const IntakeWizard = {
     };
 
     try {
-      // Generate PDF from the cloned content
-      const pdfBlob = await html2pdf().set(opt).from(clonedCard).outputPdf('blob');
+      // Generate PDF from the container (not the card, to ensure proper positioning)
+      const pdfBlob = await html2pdf().set(opt).from(pdfContainer).outputPdf('blob');
 
       // Convert blob to base64
       const base64 = await new Promise((resolve, reject) => {
