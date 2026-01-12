@@ -542,35 +542,41 @@ const IntakeWizard = {
         padding: 1px !important;
       }
 
-      /* Page break handling */
-      .wizard-step-header {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
+      /* Explicit page break class */
+      .pdf-page-break {
+        page-break-before: always !important;
+        break-before: always !important;
+        display: block !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
-      .form-section {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      .form-section h3 {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-      }
+
+      /* Symptom cards - keep together */
       .symptom-card {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .matrix-table {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-
-      /* Ensure section headers don't get orphaned */
-      h2, h3, h4 {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-      }
     `;
     document.head.appendChild(pdfStyles);
+
+    // Insert page breaks before each wizard step header (except first)
+    const stepHeaders = formCard.querySelectorAll('.wizard-step-header');
+    stepHeaders.forEach((header, idx) => {
+      if (idx > 0) {
+        const pageBreak = document.createElement('div');
+        pageBreak.className = 'pdf-page-break html2pdf__page-break';
+        header.parentNode.insertBefore(pageBreak, header);
+      }
+    });
+
+    // Insert page breaks before each form-section h3 to prevent header slicing
+    const sectionHeaders = formCard.querySelectorAll('.form-section > h3');
+    sectionHeaders.forEach((header) => {
+      const pageBreak = document.createElement('div');
+      pageBreak.className = 'pdf-page-break html2pdf__page-break';
+      header.parentNode.insertBefore(pageBreak, header);
+    });
 
     // Scroll to top
     window.scrollTo(0, 0);
