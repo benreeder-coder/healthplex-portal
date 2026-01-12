@@ -472,155 +472,55 @@ const IntakeWizard = {
    * Returns base64 encoded PDF string
    */
   async generateFormPDF() {
-    // Create container positioned behind loading overlay (visible but covered)
-    const pdfContainer = document.createElement('div');
-    pdfContainer.id = 'pdf-render-container';
-    pdfContainer.style.cssText = `
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 800px;
-      height: 100vh;
-      overflow: auto;
-      background: white;
-      z-index: 9999;
-      padding: 0;
-      margin: 0;
-    `;
-    document.body.appendChild(pdfContainer);
+    // IMPORTANT: Loading overlay should already be visible (called from handleSubmit)
+    // This hides any visual changes from the user
 
-    // Clone the form card for PDF rendering
     const formCard = document.querySelector('.form-card');
-    const clonedCard = formCard.cloneNode(true);
+    const allSteps = document.querySelectorAll('.wizard-step');
 
-    // Reset positioning on cloned card
-    clonedCard.style.cssText = `
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-      padding: 20px !important;
-      box-shadow: none !important;
-      position: relative !important;
-      left: 0 !important;
-      top: 0 !important;
-    `;
+    // Save original states
+    const originalStates = [];
+    allSteps.forEach((step, idx) => {
+      originalStates[idx] = {
+        classList: [...step.classList],
+        display: step.style.display
+      };
+    });
 
-    // Show all wizard steps in the clone (except step 8)
-    const allSteps = clonedCard.querySelectorAll('.wizard-step');
+    // Save original visibility of UI elements
+    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary, .review-section');
+    const hiddenOriginalDisplay = [];
+    elementsToHide.forEach((el, idx) => {
+      hiddenOriginalDisplay[idx] = el.style.display;
+      el.style.display = 'none';
+    });
+
+    // Show all steps except step 8 (review)
     allSteps.forEach((step, idx) => {
       if (idx < allSteps.length - 1) {
         step.classList.add('active');
         step.style.display = 'block';
-        step.style.position = 'relative';
-        step.style.left = '0';
       } else {
         step.style.display = 'none';
       }
     });
 
-    // Remove navigation, progress indicators, and review elements from clone
-    const elementsToRemove = clonedCard.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary, .review-section, [data-step="8"]');
-    elementsToRemove.forEach(el => el.remove());
+    // Scroll to top
+    window.scrollTo(0, 0);
 
-    pdfContainer.appendChild(clonedCard);
+    // Wait for DOM to update
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Add PDF-specific styles
-    const pdfStyles = document.createElement('style');
-    pdfStyles.id = 'pdf-temp-styles';
-    pdfStyles.textContent = `
-      #pdf-render-container .form-card {
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 15px !important;
-        box-shadow: none !important;
-      }
-      #pdf-render-container .wizard-step {
-        display: block !important;
-        margin-bottom: 20px !important;
-        padding-bottom: 15px !important;
-        border-bottom: 1px solid #ddd;
-      }
-      #pdf-render-container .wizard-step[data-step="8"] { display: none !important; }
-      #pdf-render-container .wizard-step-header { margin-bottom: 15px !important; }
-      #pdf-render-container .wizard-step-header h2 { font-size: 18px !important; margin-bottom: 5px !important; color: #1a9ba0 !important; }
-      #pdf-render-container .wizard-step-header p { font-size: 12px !important; color: #666 !important; }
-
-      /* Form sections */
-      #pdf-render-container .form-section { margin-bottom: 15px !important; }
-      #pdf-render-container .form-section h3 { font-size: 14px !important; margin-bottom: 10px !important; color: #333 !important; }
-      #pdf-render-container .form-group { margin-bottom: 8px !important; }
-      #pdf-render-container .form-group label { font-size: 11px !important; font-weight: 600 !important; color: #444 !important; display: block !important; margin-bottom: 3px !important; }
-      #pdf-render-container .form-group input,
-      #pdf-render-container .form-group select { font-size: 11px !important; padding: 6px !important; border: 1px solid #ccc !important; background: #fff !important; }
-      #pdf-render-container .form-group textarea { font-size: 11px !important; padding: 6px !important; border: 1px solid #ccc !important; min-height: 40px !important; }
-      #pdf-render-container .form-row { display: flex !important; gap: 10px !important; flex-wrap: wrap !important; }
-
-      /* Family history tables */
-      #pdf-render-container .matrix-table { font-size: 9px !important; width: 100% !important; border-collapse: collapse !important; }
-      #pdf-render-container .matrix-table th { padding: 5px 3px !important; font-size: 8px !important; background: #f5f5f5 !important; border: 1px solid #ddd !important; }
-      #pdf-render-container .matrix-table td { padding: 4px 3px !important; border: 1px solid #ddd !important; }
-      #pdf-render-container .matrix-table td:first-child { font-size: 9px !important; font-weight: 500 !important; min-width: 80px !important; }
-      #pdf-render-container .matrix-table input[type="checkbox"] { width: 12px !important; height: 12px !important; }
-      #pdf-render-container .matrix-table input[type="text"] { font-size: 8px !important; padding: 2px !important; width: 100% !important; border: 1px solid #ccc !important; }
-
-      /* Symptom cards */
-      #pdf-render-container .symptom-card { padding: 10px !important; margin-bottom: 10px !important; background: #fafafa !important; border: 1px solid #eee !important; border-radius: 4px !important; }
-      #pdf-render-container .symptom-card h4 { font-size: 12px !important; margin-bottom: 8px !important; color: #1a9ba0 !important; }
-      #pdf-render-container .symptom-item { padding: 4px 0 !important; font-size: 10px !important; display: flex !important; align-items: center !important; gap: 10px !important; border-bottom: 1px solid #eee !important; }
-      #pdf-render-container .symptom-item:last-child { border-bottom: none !important; }
-      #pdf-render-container .symptom-item > span:first-child { flex: 1 !important; }
-
-      /* Rating buttons - show selected value */
-      #pdf-render-container .rating-group { display: flex !important; gap: 3px !important; }
-      #pdf-render-container .rating-group label { width: 22px !important; height: 22px !important; font-size: 10px !important; line-height: 22px !important; text-align: center !important; border: 1px solid #ccc !important; border-radius: 3px !important; }
-      #pdf-render-container .rating-group input:checked + label { background: #1a9ba0 !important; color: white !important; border-color: #1a9ba0 !important; }
-
-      /* Checkboxes */
-      #pdf-render-container .checkbox-group { display: flex !important; flex-wrap: wrap !important; gap: 5px !important; }
-      #pdf-render-container .checkbox-group label { font-size: 10px !important; padding: 4px 8px !important; border: 1px solid #ccc !important; border-radius: 3px !important; }
-      #pdf-render-container .checkbox-group input:checked + label { background: #1a9ba0 !important; color: white !important; }
-
-      /* Commitment scales */
-      #pdf-render-container .scale-group { display: flex !important; gap: 3px !important; }
-      #pdf-render-container .scale-group label { width: 24px !important; height: 24px !important; font-size: 10px !important; line-height: 24px !important; text-align: center !important; border: 1px solid #ccc !important; border-radius: 3px !important; }
-      #pdf-render-container .scale-group input:checked + label { background: #1a9ba0 !important; color: white !important; }
-
-      /* Hide elements */
-      #pdf-render-container .wizard-nav,
-      #pdf-render-container .wizard-progress,
-      #pdf-render-container .wizard-mobile-progress,
-      #pdf-render-container .wizard-intro-box,
-      #pdf-render-container .review-edit-btn,
-      #pdf-render-container .total-score-card,
-      #pdf-render-container #review-summary,
-      #pdf-render-container .review-section { display: none !important; }
-    `;
-    document.head.appendChild(pdfStyles);
-
-    // Scroll the container to top to ensure proper capture
-    pdfContainer.scrollTop = 0;
-
-    // Wait for rendering to complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Configure PDF options
+    // Configure PDF options - simple and reliable
     const opt = {
       margin: [10, 10, 10, 10],
       filename: `intake-form-${Date.now()}.pdf`,
-      image: { type: 'jpeg', quality: 0.92 },
+      image: { type: 'jpeg', quality: 0.95 },
       html2canvas: {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
-        letterRendering: true,
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        windowWidth: 800,
-        backgroundColor: '#ffffff',
         logging: false,
-        removeContainer: false
+        scrollY: -window.scrollY
       },
       jsPDF: {
         unit: 'mm',
@@ -628,14 +528,13 @@ const IntakeWizard = {
         orientation: 'portrait'
       },
       pagebreak: {
-        mode: ['css', 'legacy'],
-        avoid: ['.form-section', '.symptom-card', '.form-group']
+        mode: ['avoid-all', 'css', 'legacy']
       }
     };
 
     try {
-      // Generate PDF from the container (not the card, to ensure proper positioning)
-      const pdfBlob = await html2pdf().set(opt).from(pdfContainer).outputPdf('blob');
+      // Generate PDF directly from the actual form card
+      const pdfBlob = await html2pdf().set(opt).from(formCard).outputPdf('blob');
 
       // Convert blob to base64
       const base64 = await new Promise((resolve, reject) => {
@@ -650,12 +549,16 @@ const IntakeWizard = {
 
       return base64;
     } finally {
-      // Clean up
-      const tempStyles = document.getElementById('pdf-temp-styles');
-      if (tempStyles) tempStyles.remove();
+      // Restore original step states
+      allSteps.forEach((step, idx) => {
+        step.className = originalStates[idx].classList.join(' ');
+        step.style.display = originalStates[idx].display;
+      });
 
-      const container = document.getElementById('pdf-render-container');
-      if (container) container.remove();
+      // Restore hidden elements
+      elementsToHide.forEach((el, idx) => {
+        el.style.display = hiddenOriginalDisplay[idx];
+      });
     }
   },
 
