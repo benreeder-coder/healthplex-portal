@@ -542,9 +542,31 @@ const IntakeWizard = {
         padding: 1px !important;
       }
 
-      /* Keep headers with their content */
-      .wizard-step-header,
-      .form-section h3,
+      /* Add buffer zones above headers to prevent slicing */
+      /* html2canvas renders to single canvas then slices - padding creates safe cut zones */
+
+      .wizard-step-header {
+        margin-top: 40px !important;
+        padding-top: 20px !important;
+        page-break-before: always !important;
+        break-before: always !important;
+      }
+
+      /* First step header doesn't need extra margin */
+      .wizard-step:first-child .wizard-step-header {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
+      }
+
+      .form-section h3 {
+        margin-top: 30px !important;
+        padding-top: 15px !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+
       h2, h3, h4 {
         page-break-after: avoid !important;
         break-after: avoid !important;
@@ -556,10 +578,19 @@ const IntakeWizard = {
         break-inside: avoid !important;
       }
 
-      /* Symptom cards - keep together */
+      /* Symptom cards - add buffer and keep together */
       .symptom-card {
+        margin-top: 25px !important;
+        padding-top: 10px !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+      }
+
+      /* Category headers need big buffer zones */
+      .symptom-card h3 {
+        margin-top: 20px !important;
+        padding-top: 15px !important;
+        page-break-before: auto !important;
       }
     `;
     document.head.appendChild(pdfStyles);
@@ -588,7 +619,8 @@ const IntakeWizard = {
       },
       pagebreak: {
         mode: ['avoid-all', 'css', 'legacy'],
-        avoid: ['.form-section', '.symptom-card', '.matrix-table', 'h2', 'h3', 'h4']
+        before: ['.wizard-step-header'],
+        avoid: ['.form-section', '.symptom-card', '.matrix-table', 'h2', 'h3', 'h4', '.wizard-step-header']
       }
     };
 
