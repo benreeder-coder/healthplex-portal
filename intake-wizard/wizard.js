@@ -468,6 +468,76 @@ const IntakeWizard = {
   },
 
   /**
+   * Generate PDF of the complete form
+   * Returns base64 encoded PDF string
+   */
+  async generateFormPDF() {
+    // Show all wizard steps temporarily for PDF capture
+    const allSteps = document.querySelectorAll('.wizard-step');
+    const originalStates = [];
+
+    allSteps.forEach((step, idx) => {
+      originalStates[idx] = step.classList.contains('active');
+      step.classList.add('active');
+      step.style.display = 'block';
+    });
+
+    // Hide navigation buttons and progress indicators for PDF
+    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box');
+    elementsToHide.forEach(el => el.style.display = 'none');
+
+    // Configure PDF options
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `intake-form-${Date.now()}.pdf`,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        scrollY: 0
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    try {
+      // Generate PDF as base64
+      const formCard = document.querySelector('.form-card');
+      const pdfBlob = await html2pdf().set(opt).from(formCard).outputPdf('blob');
+
+      // Convert blob to base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          // Remove the data:application/pdf;base64, prefix
+          const base64String = reader.result.split(',')[1];
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      return base64;
+    } finally {
+      // Restore original step visibility
+      allSteps.forEach((step, idx) => {
+        if (!originalStates[idx]) {
+          step.classList.remove('active');
+        }
+        step.style.display = '';
+      });
+
+      // Restore hidden elements
+      elementsToHide.forEach(el => el.style.display = '');
+    }
+  },
+
+  /**
    * Handle form submission
    */
   async handleSubmit(e) {
@@ -481,16 +551,50 @@ const IntakeWizard = {
       this.stepValidation[i] = true;
     }
 
-    // Add completion metadata
-    const durationInput = document.createElement('input');
-    durationInput.type = 'hidden';
-    durationInput.name = '_wizardDuration';
-    durationInput.value = this.getFormDuration();
-    this.form.appendChild(durationInput);
+    // Show loading state
+    const submitBtn = this.form.querySelector('.wizard-nav-submit');
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.textContent = 'Generating PDF...';
+    submitBtn.disabled = true;
 
-    // Let FormUtils handle the actual submission
-    if (window.FormUtils && typeof FormUtils.handleSubmit === 'function') {
-      FormUtils.handleSubmit(e);
+    try {
+      // Generate PDF before submission
+      console.log('Generating PDF of intake form...');
+      const pdfBase64 = await this.generateFormPDF();
+      console.log('PDF generated, size:', Math.round(pdfBase64.length / 1024), 'KB');
+
+      // Store PDF data for FormUtils to pick up
+      window._intakeWizardPDF = pdfBase64;
+
+      // Update button text
+      submitBtn.textContent = 'Submitting...';
+
+      // Add completion metadata
+      const durationInput = document.createElement('input');
+      durationInput.type = 'hidden';
+      durationInput.name = '_wizardDuration';
+      durationInput.value = this.getFormDuration();
+      this.form.appendChild(durationInput);
+
+      // Let FormUtils handle the actual submission
+      if (window.FormUtils && typeof FormUtils.handleSubmit === 'function') {
+        FormUtils.handleSubmit(e);
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // Still submit even if PDF fails
+      submitBtn.textContent = 'Submitting...';
+
+      // Add completion metadata
+      const durationInput = document.createElement('input');
+      durationInput.type = 'hidden';
+      durationInput.name = '_wizardDuration';
+      durationInput.value = this.getFormDuration();
+      this.form.appendChild(durationInput);
+
+      if (window.FormUtils && typeof FormUtils.handleSubmit === 'function') {
+        FormUtils.handleSubmit(e);
+      }
     }
   }
 };

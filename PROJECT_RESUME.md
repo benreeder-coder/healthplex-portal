@@ -90,6 +90,64 @@ The wizard sends a structured JSON payload with:
 - **Draft saving disabled**: `wizard.js:38-40` - clears localStorage on init
 - **GHL field mapping**: `ghl_body_for_n8n.txt:7-173` - n8n JSON body template for GHL API
 
+## Recent Changes (Jan 12, 2026) - PDF Attachment Feature
+
+### What We Did
+Added automatic PDF generation of the intake form at submission time. The PDF is sent as base64 in the webhook payload for upload to GHL.
+
+### Files Modified
+- **`intake-wizard/index.html`** - Added html2pdf.js CDN library
+- **`intake-wizard/wizard.js`** - Added `generateFormPDF()` function and modified `handleSubmit()` to generate PDF before submission
+- **`shared/form-utils.js`** - Added `pdfAttachment` object to the intake wizard payload
+
+### New Payload Structure
+The webhook payload now includes:
+```javascript
+{
+  // ... existing fields ...
+  pdfAttachment: {
+    filename: "intake-form-{lastName}-{date}.pdf",
+    mimeType: "application/pdf",
+    base64Data: "JVBERi0xLjQK..." // Base64 encoded PDF
+  }
+}
+```
+
+### n8n Workflow Changes Required
+To upload the PDF to GHL, add a new HTTP Request node after the Create/Update Contact nodes:
+
+**Node: Upload PDF to GHL**
+- Method: POST
+- URL: `https://services.leadconnectorhq.com/forms/upload-custom-files`
+- Query Parameters:
+  - `contactId`: `{{ $json.contact.id }}` (from Create/Update response)
+  - `locationId`: Your GHL location ID
+- Headers:
+  - `Authorization`: `Bearer {your_api_key}`
+  - `Content-Type`: `multipart/form-data`
+- Body (Form-Data):
+  - Key: `{customFieldId}_{uuid}` (e.g., `intake_form_pdf_abc123`)
+  - Value: Binary data from base64
+
+**GHL Prerequisites:**
+1. Create a "File Upload" custom field in GHL (Settings → Custom Fields)
+2. Note the custom field ID (you'll need it for the upload)
+
+### Full curl Example
+```bash
+curl --location 'https://services.leadconnectorhq.com/forms/upload-custom-files?contactId=CONTACT_ID&locationId=LOCATION_ID' \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Version: 2021-07-28' \
+  --form 'CUSTOM_FIELD_ID_UUID=@/path/to/file.pdf'
+```
+
+### n8n Implementation Notes
+1. Use a "Code" node to convert base64 to binary buffer
+2. Use "HTTP Request" node with binary data option
+3. Generate a UUID for each upload (use `{{ $randomUUID }}` in n8n)
+
+---
+
 ## Recent Changes (Jan 11, 2026) - GHL Integration
 
 ### What We Did
