@@ -472,60 +472,99 @@ const IntakeWizard = {
    * Returns base64 encoded PDF string
    */
   async generateFormPDF() {
-    // Show all wizard steps temporarily for PDF capture
+    // Show all wizard steps temporarily for PDF capture (except the last review step)
     const allSteps = document.querySelectorAll('.wizard-step');
     const originalStates = [];
 
     allSteps.forEach((step, idx) => {
-      originalStates[idx] = step.classList.contains('active');
-      step.classList.add('active');
-      step.style.display = 'block';
+      originalStates[idx] = {
+        active: step.classList.contains('active'),
+        display: step.style.display
+      };
+      // Skip the last step (Review & Submit) - it just duplicates info
+      if (idx < allSteps.length - 1) {
+        step.classList.add('active');
+        step.style.display = 'block';
+      } else {
+        step.style.display = 'none';
+      }
     });
 
     // Hide navigation buttons, progress indicators, and other UI elements for PDF
-    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary');
+    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary, .review-section, [data-step="8"]');
     elementsToHide.forEach(el => el.style.display = 'none');
 
     // Add PDF-specific styles temporarily
     const pdfStyles = document.createElement('style');
     pdfStyles.id = 'pdf-temp-styles';
     pdfStyles.textContent = `
-      .form-card { max-width: 100% !important; padding: 15px !important; }
-      .wizard-step { margin-bottom: 20px !important; padding-bottom: 10px !important; border-bottom: 1px solid #eee; }
-      .wizard-step-header { margin-bottom: 15px !important; }
-      .wizard-step-header h2 { font-size: 18px !important; margin-bottom: 5px !important; }
-      .form-section { margin-bottom: 15px !important; page-break-inside: avoid; }
-      .form-section h3 { font-size: 14px !important; margin-bottom: 10px !important; }
-      .form-group { margin-bottom: 10px !important; }
-      .form-group label { font-size: 12px !important; margin-bottom: 3px !important; }
-      .form-group input, .form-group select, .form-group textarea { font-size: 11px !important; padding: 6px !important; }
-      .form-row { gap: 10px !important; }
-      .matrix-table { font-size: 9px !important; }
-      .matrix-table th { padding: 4px 2px !important; font-size: 8px !important; }
-      .matrix-table td { padding: 3px 2px !important; }
-      .matrix-table td:first-child { font-size: 9px !important; min-width: 80px !important; }
-      .symptom-card { padding: 8px !important; margin-bottom: 8px !important; page-break-inside: avoid; }
-      .symptom-card h4 { font-size: 12px !important; margin-bottom: 6px !important; }
-      .symptom-item { padding: 4px 0 !important; font-size: 10px !important; }
-      .symptom-item label { font-size: 10px !important; }
-      .rating-group { gap: 3px !important; }
-      .rating-group label { width: 22px !important; height: 22px !important; font-size: 10px !important; }
-      .checkbox-group label { font-size: 11px !important; padding: 4px 8px !important; }
-      textarea { min-height: 40px !important; max-height: 60px !important; }
+      /* General layout */
+      .form-card { max-width: 100% !important; padding: 10px !important; }
+      .wizard-step { margin-bottom: 15px !important; padding-bottom: 8px !important; border-bottom: 1px solid #ddd; page-break-inside: avoid; }
+      .wizard-step:last-child { display: none !important; }
+      .wizard-step-header { margin-bottom: 10px !important; page-break-after: avoid; }
+      .wizard-step-header h2 { font-size: 16px !important; margin-bottom: 3px !important; }
+      .wizard-step-header p { font-size: 10px !important; margin-bottom: 5px !important; }
+
+      /* Form sections */
+      .form-section { margin-bottom: 12px !important; page-break-inside: avoid; }
+      .form-section h3 { font-size: 13px !important; margin-bottom: 8px !important; page-break-after: avoid; }
+      .form-group { margin-bottom: 6px !important; }
+      .form-group label { font-size: 10px !important; margin-bottom: 2px !important; }
+      .form-group input, .form-group select { font-size: 10px !important; padding: 4px !important; height: auto !important; min-height: 24px !important; }
+      .form-group textarea { font-size: 10px !important; padding: 4px !important; min-height: 30px !important; max-height: 50px !important; resize: none !important; }
+      .form-row { gap: 8px !important; }
+
+      /* Family history tables - make them fit */
+      .matrix-table { font-size: 7px !important; width: 100% !important; table-layout: fixed !important; }
+      .matrix-table th { padding: 3px 1px !important; font-size: 6px !important; white-space: nowrap !important; }
+      .matrix-table td { padding: 2px 1px !important; }
+      .matrix-table td:first-child { font-size: 7px !important; width: 70px !important; min-width: 70px !important; max-width: 70px !important; }
+      .matrix-table input[type="checkbox"] { width: 10px !important; height: 10px !important; }
+      .matrix-table input[type="text"] { font-size: 6px !important; padding: 1px !important; width: 100% !important; }
+
+      /* Symptom cards - compact */
+      .symptom-card { padding: 6px !important; margin-bottom: 6px !important; page-break-inside: avoid; }
+      .symptom-card h4 { font-size: 11px !important; margin-bottom: 4px !important; }
+      .symptom-item { padding: 2px 0 !important; font-size: 9px !important; }
+      .symptom-item label { font-size: 9px !important; }
+      .symptom-item > span:first-child { flex: 1 !important; }
+
+      /* Rating buttons */
+      .rating-group { gap: 2px !important; }
+      .rating-group label { width: 18px !important; height: 18px !important; font-size: 8px !important; line-height: 18px !important; }
+
+      /* Checkboxes */
+      .checkbox-group { gap: 4px !important; }
+      .checkbox-group label { font-size: 9px !important; padding: 3px 6px !important; }
+
+      /* Hide empty textareas placeholder text */
+      textarea:placeholder-shown { min-height: 25px !important; }
+      input:placeholder-shown { background: #f9f9f9 !important; }
+
+      /* Commitment scales */
+      .scale-group { gap: 2px !important; }
+      .scale-group label { width: 20px !important; height: 20px !important; font-size: 8px !important; }
+
+      /* Hide review step completely */
+      .wizard-step[data-step="8"] { display: none !important; }
+      #review-summary { display: none !important; }
+      .review-section { display: none !important; }
+      .total-score-card { display: none !important; }
     `;
     document.head.appendChild(pdfStyles);
 
     // Configure PDF options - optimized for cleaner output
     const opt = {
-      margin: [8, 8, 8, 8],
+      margin: [5, 5, 5, 5],
       filename: `intake-form-${Date.now()}.pdf`,
-      image: { type: 'jpeg', quality: 0.92 },
+      image: { type: 'jpeg', quality: 0.85 },
       html2canvas: {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
         letterRendering: true,
         scrollY: 0,
-        windowWidth: 900
+        windowWidth: 800
       },
       jsPDF: {
         unit: 'mm',
@@ -535,7 +574,7 @@ const IntakeWizard = {
       pagebreak: {
         mode: ['css', 'legacy'],
         before: '.wizard-step-header',
-        avoid: ['.form-section', '.symptom-card', '.form-group', '.matrix-table tr']
+        avoid: ['.form-section', '.symptom-card', '.form-group', '.matrix-table']
       }
     };
 
@@ -564,10 +603,10 @@ const IntakeWizard = {
 
       // Restore original step visibility
       allSteps.forEach((step, idx) => {
-        if (!originalStates[idx]) {
+        if (!originalStates[idx].active) {
           step.classList.remove('active');
         }
-        step.style.display = '';
+        step.style.display = originalStates[idx].display || '';
       });
 
       // Restore hidden elements
