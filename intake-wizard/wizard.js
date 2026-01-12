@@ -482,27 +482,61 @@ const IntakeWizard = {
       step.style.display = 'block';
     });
 
-    // Hide navigation buttons and progress indicators for PDF
-    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box');
+    // Hide navigation buttons, progress indicators, and other UI elements for PDF
+    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary');
     elementsToHide.forEach(el => el.style.display = 'none');
 
-    // Configure PDF options
+    // Add PDF-specific styles temporarily
+    const pdfStyles = document.createElement('style');
+    pdfStyles.id = 'pdf-temp-styles';
+    pdfStyles.textContent = `
+      .form-card { max-width: 100% !important; padding: 15px !important; }
+      .wizard-step { margin-bottom: 20px !important; padding-bottom: 10px !important; border-bottom: 1px solid #eee; }
+      .wizard-step-header { margin-bottom: 15px !important; }
+      .wizard-step-header h2 { font-size: 18px !important; margin-bottom: 5px !important; }
+      .form-section { margin-bottom: 15px !important; page-break-inside: avoid; }
+      .form-section h3 { font-size: 14px !important; margin-bottom: 10px !important; }
+      .form-group { margin-bottom: 10px !important; }
+      .form-group label { font-size: 12px !important; margin-bottom: 3px !important; }
+      .form-group input, .form-group select, .form-group textarea { font-size: 11px !important; padding: 6px !important; }
+      .form-row { gap: 10px !important; }
+      .matrix-table { font-size: 9px !important; }
+      .matrix-table th { padding: 4px 2px !important; font-size: 8px !important; }
+      .matrix-table td { padding: 3px 2px !important; }
+      .matrix-table td:first-child { font-size: 9px !important; min-width: 80px !important; }
+      .symptom-card { padding: 8px !important; margin-bottom: 8px !important; page-break-inside: avoid; }
+      .symptom-card h4 { font-size: 12px !important; margin-bottom: 6px !important; }
+      .symptom-item { padding: 4px 0 !important; font-size: 10px !important; }
+      .symptom-item label { font-size: 10px !important; }
+      .rating-group { gap: 3px !important; }
+      .rating-group label { width: 22px !important; height: 22px !important; font-size: 10px !important; }
+      .checkbox-group label { font-size: 11px !important; padding: 4px 8px !important; }
+      textarea { min-height: 40px !important; max-height: 60px !important; }
+    `;
+    document.head.appendChild(pdfStyles);
+
+    // Configure PDF options - optimized for cleaner output
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: [8, 8, 8, 8],
       filename: `intake-form-${Date.now()}.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
+      image: { type: 'jpeg', quality: 0.92 },
       html2canvas: {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         letterRendering: true,
-        scrollY: 0
+        scrollY: 0,
+        windowWidth: 900
       },
       jsPDF: {
         unit: 'mm',
         format: 'a4',
         orientation: 'portrait'
       },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak: {
+        mode: ['css', 'legacy'],
+        before: '.wizard-step-header',
+        avoid: ['.form-section', '.symptom-card', '.form-group', '.matrix-table tr']
+      }
     };
 
     try {
@@ -524,6 +558,10 @@ const IntakeWizard = {
 
       return base64;
     } finally {
+      // Remove temporary PDF styles
+      const tempStyles = document.getElementById('pdf-temp-styles');
+      if (tempStyles) tempStyles.remove();
+
       // Restore original step visibility
       allSteps.forEach((step, idx) => {
         if (!originalStates[idx]) {
