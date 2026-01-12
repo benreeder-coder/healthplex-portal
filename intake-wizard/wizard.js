@@ -505,6 +505,73 @@ const IntakeWizard = {
       }
     });
 
+    // Add PDF-specific styles to fix tables and page breaks
+    const pdfStyles = document.createElement('style');
+    pdfStyles.id = 'pdf-temp-styles';
+    pdfStyles.textContent = `
+      /* Make form narrower for PDF */
+      .form-card {
+        max-width: 700px !important;
+      }
+
+      /* Family history tables - make columns narrower */
+      .matrix-table {
+        font-size: 8px !important;
+        table-layout: fixed !important;
+        width: 100% !important;
+      }
+      .matrix-table th {
+        padding: 4px 2px !important;
+        font-size: 7px !important;
+        word-wrap: break-word !important;
+      }
+      .matrix-table td {
+        padding: 3px 2px !important;
+      }
+      .matrix-table td:first-child {
+        width: 90px !important;
+        font-size: 8px !important;
+      }
+      .matrix-table input[type="checkbox"] {
+        width: 12px !important;
+        height: 12px !important;
+      }
+      .matrix-table input[type="text"] {
+        font-size: 7px !important;
+        width: 100% !important;
+        padding: 1px !important;
+      }
+
+      /* Page break handling */
+      .wizard-step-header {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+      .form-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .form-section h3 {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+      .symptom-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .matrix-table {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      /* Ensure section headers don't get orphaned */
+      h2, h3, h4 {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+    `;
+    document.head.appendChild(pdfStyles);
+
     // Scroll to top
     window.scrollTo(0, 0);
 
@@ -513,7 +580,7 @@ const IntakeWizard = {
 
     // Configure PDF options - simple and reliable
     const opt = {
-      margin: [10, 10, 10, 10],
+      margin: [10, 8, 10, 8],
       filename: `intake-form-${Date.now()}.pdf`,
       image: { type: 'jpeg', quality: 0.95 },
       html2canvas: {
@@ -528,7 +595,8 @@ const IntakeWizard = {
         orientation: 'portrait'
       },
       pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy']
+        mode: ['avoid-all', 'css', 'legacy'],
+        avoid: ['.form-section', '.symptom-card', '.matrix-table', 'h2', 'h3', 'h4']
       }
     };
 
@@ -549,6 +617,10 @@ const IntakeWizard = {
 
       return base64;
     } finally {
+      // Remove PDF styles
+      const tempStyles = document.getElementById('pdf-temp-styles');
+      if (tempStyles) tempStyles.remove();
+
       // Restore original step states
       allSteps.forEach((step, idx) => {
         step.className = originalStates[idx].classList.join(' ');
