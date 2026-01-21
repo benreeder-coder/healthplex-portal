@@ -718,47 +718,173 @@ const IntakeWizard = {
 
     // Disable submit button
     const submitBtn = this.form.querySelector('.wizard-nav-submit');
-    submitBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+
+    // Timeout protection - 30 seconds max wait
+    const TIMEOUT_MS = 30000;
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      this.handleSubmissionFailure('Submission timed out. Please check your internet connection and try again.', submitBtn);
+    }, TIMEOUT_MS);
 
     try {
-      // Generate PDF before submission
-      console.log('Generating PDF of intake form...');
-      const pdfBase64 = await this.generateFormPDF();
-      console.log('PDF generated, size:', Math.round(pdfBase64.length / 1024), 'KB');
+      // Generate PDF before submission (optional - don't block if fails)
+      try {
+        console.log('Generating PDF of intake form...');
+        const pdfBase64 = await this.generateFormPDF();
+        console.log('PDF generated, size:', Math.round(pdfBase64.length / 1024), 'KB');
+        window._intakeWizardPDF = pdfBase64;
+      } catch (pdfError) {
+        console.warn('PDF generation failed, continuing without PDF:', pdfError);
+        window._intakeWizardPDF = null;
+      }
 
-      // Store PDF data for FormUtils to pick up
-      window._intakeWizardPDF = pdfBase64;
+      // Check if already timed out
+      if (timedOut) return;
 
       // Update loading message
       this.updateLoadingMessage('Submitting your information...');
 
       // Add completion metadata
-      const durationInput = document.createElement('input');
-      durationInput.type = 'hidden';
-      durationInput.name = '_wizardDuration';
-      durationInput.value = this.getFormDuration();
-      this.form.appendChild(durationInput);
+      this.addDurationMetadata();
 
-      // Let FormUtils handle the actual submission
-      if (window.FormUtils && typeof FormUtils.handleSubmit === 'function') {
-        FormUtils.handleSubmit(e);
+      // Check FormUtils exists
+      if (!window.FormUtils || typeof FormUtils.handleSubmit !== 'function') {
+        throw new Error('Form system not loaded. Please refresh the page and try again.');
       }
+
+      // AWAIT the submission - this was the critical missing piece!
+      const result = await FormUtils.handleSubmit(e);
+
+      clearTimeout(timeoutId);
+
+      // Check if submission failed
+      if (result && !result.success && !timedOut) {
+        this.handleSubmissionFailure(result.message || 'Submission failed. Please try again.', submitBtn);
+      }
+
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      // Still submit even if PDF fails
-      this.updateLoadingMessage('Submitting your information...');
-
-      // Add completion metadata
-      const durationInput = document.createElement('input');
-      durationInput.type = 'hidden';
-      durationInput.name = '_wizardDuration';
-      durationInput.value = this.getFormDuration();
-      this.form.appendChild(durationInput);
-
-      if (window.FormUtils && typeof FormUtils.handleSubmit === 'function') {
-        FormUtils.handleSubmit(e);
+      clearTimeout(timeoutId);
+      if (!timedOut) {
+        console.error('Submission error:', error);
+        this.handleSubmissionFailure(error.message || 'An unexpected error occurred. Please try again.', submitBtn);
       }
     }
+  },
+
+  /**
+   * Add duration metadata to form
+   */
+  addDurationMetadata() {
+    // Remove existing duration input if any
+    const existingInput = this.form.querySelector('input[name="_wizardDuration"]');
+    if (existingInput) existingInput.remove();
+
+    const durationInput = document.createElement('input');
+    durationInput.type = 'hidden';
+    durationInput.name = '_wizardDuration';
+    durationInput.value = this.getFormDuration();
+    this.form.appendChild(durationInput);
+  },
+
+  /**
+   * Handle submission failure - cleanup and show error
+   */
+  handleSubmissionFailure(message, submitBtn) {
+    this.hideLoadingOverlay();
+    if (submitBtn) submitBtn.disabled = false;
+    this.showSubmissionError(message);
+  },
+
+  /**
+   * Show submission error modal with user-friendly message
+   */
+  showSubmissionError(message) {
+    // Remove existing error modal if any
+    const existingModal = document.querySelector('.submission-error-modal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'submission-error-modal';
+    modal.innerHTML = `
+      <div class="submission-error-content">
+        <div class="submission-error-icon">⚠️</div>
+        <h3>Submission Error</h3>
+        <p class="error-message">${this.escapeHtml(message)}</p>
+        <p class="error-reassurance">Your information has been saved locally. Please try submitting again.</p>
+        <button class="btn btn-primary error-dismiss-btn">OK, I'll Try Again</button>
+      </div>
+    `;
+
+    // Style the modal
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    const content = modal.querySelector('.submission-error-content');
+    content.style.cssText = `
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    `;
+
+    const icon = modal.querySelector('.submission-error-icon');
+    icon.style.cssText = `font-size: 3rem; margin-bottom: 1rem;`;
+
+    const h3 = modal.querySelector('h3');
+    h3.style.cssText = `margin: 0 0 1rem; color: #c53030; font-size: 1.25rem;`;
+
+    const errorMsg = modal.querySelector('.error-message');
+    errorMsg.style.cssText = `color: #444; margin-bottom: 0.75rem; font-size: 0.95rem;`;
+
+    const reassurance = modal.querySelector('.error-reassurance');
+    reassurance.style.cssText = `color: #666; font-size: 0.85rem; margin-bottom: 1.5rem;`;
+
+    const btn = modal.querySelector('.error-dismiss-btn');
+    btn.style.cssText = `
+      background: #1a7f7f;
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+    `;
+
+    btn.addEventListener('click', () => {
+      modal.remove();
+    });
+
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+
+    document.body.appendChild(modal);
+  },
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 };
 

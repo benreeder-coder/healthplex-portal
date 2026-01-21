@@ -235,6 +235,7 @@ const FormUtils = {
 
   /**
    * Handle form submission
+   * @returns {Promise<{success: boolean, message?: string}>} Result of the submission
    */
   async handleSubmit(e) {
     e.preventDefault();
@@ -242,7 +243,7 @@ const FormUtils = {
     // Validate form
     if (!this.validateForm()) {
       this.scrollToFirstError();
-      return;
+      return { success: false, message: 'Please fill out all required fields.' };
     }
 
     // Show loading state
@@ -259,17 +260,35 @@ const FormUtils = {
         throw new Error('Webhook URL not configured. Please update config.js');
       }
 
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const FETCH_TIMEOUT_MS = 25000;
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
       // Submit to webhook
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`Submission failed: ${response.status}`);
+        // Try to get error message from response body
+        let errorMsg = `Submission failed (status ${response.status})`;
+        try {
+          const errorBody = await response.text();
+          if (errorBody) {
+            errorMsg = errorBody.substring(0, 200);
+          }
+        } catch (parseErr) {
+          // Ignore parse errors, use status code message
+        }
+        throw new Error(errorMsg);
       }
 
       // Clear draft
@@ -278,9 +297,19 @@ const FormUtils = {
       // Show success
       this.showSuccess();
 
+      return { success: true };
+
     } catch (error) {
       console.error('Form submission error:', error);
-      this.showError(error.message);
+
+      // Handle timeout specifically
+      let errorMessage = error.message;
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your internet connection and try again.';
+      }
+
+      this.showError(errorMessage);
+      return { success: false, message: errorMessage };
     } finally {
       this.setSubmitting(false);
     }
