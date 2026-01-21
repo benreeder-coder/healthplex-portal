@@ -364,17 +364,35 @@ const FormUtils = {
       }
     }
 
-    // Process unchecked checkboxes (they're not in FormData)
-    this.form.querySelectorAll('input[type="checkbox"]:not(:checked)').forEach(cb => {
-      if (!rawData[cb.name]) {
-        rawData[cb.name] = false;
+    // Process ALL checkboxes explicitly (don't rely on FormData which misses unchecked)
+    // Use document.querySelectorAll to find checkboxes in ALL steps (including hidden ones)
+    const allCheckboxes = document.querySelectorAll('#intake-wizard-form input[type="checkbox"]');
+    const checkedCount = { total: 0, checked: 0 };
+
+    allCheckboxes.forEach(cb => {
+      if (cb.name) {
+        checkedCount.total++;
+        if (cb.checked) {
+          checkedCount.checked++;
+          rawData[cb.name] = true;
+        } else {
+          rawData[cb.name] = false;
+        }
       }
     });
 
-    // Mark checked checkboxes as true (instead of 'on')
-    this.form.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-      rawData[cb.name] = true;
-    });
+    console.log(`Checkbox collection: ${checkedCount.checked}/${checkedCount.total} checked`);
+
+    // Log family history checkboxes specifically for debugging
+    const familyCheckboxes = Array.from(allCheckboxes).filter(cb =>
+      cb.name && (cb.name.includes('_mother') || cb.name.includes('_father') ||
+                  cb.name.includes('_brother') || cb.name.includes('_sister'))
+    );
+    const familyChecked = familyCheckboxes.filter(cb => cb.checked);
+    console.log(`Family history checkboxes: ${familyChecked.length}/${familyCheckboxes.length} checked`);
+    if (familyChecked.length > 0) {
+      console.log('Checked family conditions:', familyChecked.map(cb => cb.name).join(', '));
+    }
 
     // Build structured payload based on form type
     const payload = this.buildStructuredPayload(rawData);
