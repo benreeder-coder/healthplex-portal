@@ -327,7 +327,7 @@
             <h3 class="section-title">Understanding Your Situation</h3>
 
             <div class="form-group">
-              <label>What have you tried doing to resolve this problem that Did Not work?</label>
+              <label>What have you tried doing to resolve this problem that did not work?</label>
               <textarea name="triedNotWorked" placeholder="Describe treatments, approaches, or remedies you've tried..."></textarea>
             </div>
 
@@ -1130,7 +1130,7 @@
               <div class="form-group"><label>Work out / week</label><input type="number" name="workout_per_week" min="0"></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Do you smoke?</label><div class="radio-group horizontal"><label class="radio-item"><input type="radio" name="smoke" value="yes"> Yes</label><label class="radio-item"><input type="radio" name="smoke" value="no" checked> No</label></div></div>
+              <div class="form-group"><label>Do you smoke?</label><div class="radio-group horizontal"><label class="radio-item"><input type="radio" name="smoke" value="Yes"> Yes</label><label class="radio-item"><input type="radio" name="smoke" value="No" checked> No</label></div></div>
               <div class="form-group">
                 <label>Stress level (1-10)</label>
                 <div class="rating-scale" style="justify-content: flex-start;">
@@ -1182,6 +1182,19 @@
           <div class="total-score-card">
             <h4>Metabolic Assessment Total Score</h4>
             <div id="grand-total" class="total-score-value">0</div>
+          </div>
+
+          <!-- Electronic Communications Consent -->
+          <div class="form-section">
+            <h3 class="section-title">Electronic Communications Consent</h3>
+            <div class="form-group">
+              <label for="electronicConsent">Do you authorize The Healthplex to send you Personal Health Information via text message and email?</label>
+              <select id="electronicConsent" name="electronicConsent" required>
+                <option value="">Select an option...</option>
+                <option value="Yes, I authorize electronic communication via text and email.">Yes, I authorize</option>
+                <option value="No, I do not authorize electronic communication via text or email.">No, I do not authorize</option>
+              </select>
+            </div>
           </div>
 
           <!-- Review Summary -->
