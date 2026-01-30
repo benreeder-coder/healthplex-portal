@@ -891,6 +891,86 @@ const IntakeWizard = {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   IntakeWizard.init();
+
+  // ============================================
+  // "Other" field enable/disable logic
+  // ============================================
+
+  /**
+   * Setup toggle behavior for "Other" text fields
+   * Text field is disabled until checkbox/radio is checked
+   */
+  function setupOtherFieldToggle(checkboxSelector, textFieldSelector) {
+    const checkbox = document.querySelector(checkboxSelector);
+    const textField = document.querySelector(textFieldSelector);
+    if (!checkbox || !textField) return;
+
+    // Initially disable text field
+    textField.disabled = !checkbox.checked;
+
+    checkbox.addEventListener('change', () => {
+      textField.disabled = !checkbox.checked;
+      if (!checkbox.checked) textField.value = '';
+    });
+  }
+
+  // Setup for checkboxes with "Other" options
+  setupOtherFieldToggle('#past_other', 'input[name="pastCareOther"]');
+  setupOtherFieldToggle('#fc_other', 'input[name="fearConditionOther"]');
+
+  // Setup for visit purpose radio with "Other" option
+  const visitPurposeRadios = document.querySelectorAll('input[name="visitPurpose"]');
+  const visitPurposeOther = document.querySelector('input[name="visitPurposeOther"]');
+  if (visitPurposeOther && visitPurposeRadios.length > 0) {
+    // Initially disable
+    visitPurposeOther.disabled = true;
+
+    visitPurposeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        const otherSelected = document.querySelector('input[name="visitPurpose"][value="other"]')?.checked;
+        visitPurposeOther.disabled = !otherSelected;
+        if (!otherSelected) visitPurposeOther.value = '';
+      });
+    });
+  }
+
+  // ============================================
+  // Family history age mutual exclusivity
+  // ============================================
+  const familyMembers = [
+    'mother', 'father', 'brother', 'sister',
+    'child1', 'child2', 'child3', 'child4',
+    'maGma', 'maGpa', 'paGma', 'paGpa',
+    'aunt', 'uncle'
+  ];
+
+  familyMembers.forEach(member => {
+    const ageAlive = document.querySelector(`input[name="age_${member}"]`);
+    const ageDeath = document.querySelector(`input[name="death_${member}"]`);
+    if (!ageAlive || !ageDeath) return;
+
+    ageAlive.addEventListener('input', () => {
+      if (ageAlive.value) {
+        ageDeath.value = '';
+        ageDeath.disabled = true;
+        ageDeath.style.backgroundColor = '#f0f0f0';
+      } else {
+        ageDeath.disabled = false;
+        ageDeath.style.backgroundColor = '';
+      }
+    });
+
+    ageDeath.addEventListener('input', () => {
+      if (ageDeath.value) {
+        ageAlive.value = '';
+        ageAlive.disabled = true;
+        ageAlive.style.backgroundColor = '#f0f0f0';
+      } else {
+        ageAlive.disabled = false;
+        ageAlive.style.backgroundColor = '';
+      }
+    });
+  });
 });
 
 // Make globally accessible

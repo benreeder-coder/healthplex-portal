@@ -1,0 +1,51 @@
+============================================================
+n8n HTTP Request Body Updates for Checkbox Arrays
+============================================================
+
+After adding the Code node (n8n_checkbox_arrays_code_node.js) between
+your Webhook and HTTP Request nodes, update these fields in your
+HTTP Request body to reference the preprocessed arrays:
+
+------------------------------------------------------------
+REPLACE THESE FIELD VALUES:
+------------------------------------------------------------
+
+OLD (doesn't work - IIFE syntax fails in n8n):
+"are_you_here_visiting_us_to": {{ JSON.stringify((() => { ... })()) }}
+
+NEW (reference preprocessed array):
+"are_you_here_visiting_us_to": {{ $json.checkboxArrays.are_you_here_visiting_us_to }}
+
+------------------------------------------------------------
+
+FULL LIST OF FIELD REFERENCES TO UPDATE:
+------------------------------------------------------------
+
+"are_you_here_visiting_us_to": {{ $json.checkboxArrays.are_you_here_visiting_us_to }},
+
+"how_have_you_taken_care_of_your_health_in_the_past": {{ $json.checkboxArrays.how_have_you_taken_care_of_your_health_in_the_past }},
+
+"what_are_you_afraid_this_might_be_or_will_be_affecting_without_change": {{ $json.checkboxArrays.what_are_you_afraid_this_might_be_or_will_be_affecting_without_change }},
+
+"are_there_any_health_conditions_you_are_afraid_this_might_turn_into": {{ $json.checkboxArrays.are_there_any_health_conditions_you_are_afraid_this_might_turn_into }},
+
+"what_would_be_different_or_better_without_this_problem": {{ $json.checkboxArrays.what_would_be_different_or_better_without_this_problem }}
+
+------------------------------------------------------------
+WORKFLOW STRUCTURE:
+------------------------------------------------------------
+
+[Webhook] --> [Code Node*] --> [HTTP Request to GHL]
+
+* Add the new Code node here with the JavaScript from
+  n8n_checkbox_arrays_code_node.js
+
+------------------------------------------------------------
+EXPECTED RESULT IN GHL:
+------------------------------------------------------------
+
+These checkbox fields will now display as arrays in GHL:
+- Shown as pill/tag format in GHL UI
+- Example: ["Medications", "Exercise", "Diet and Nutrition"]
+
+Instead of empty or comma-separated strings.
