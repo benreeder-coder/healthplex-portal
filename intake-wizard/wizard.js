@@ -125,10 +125,7 @@ const IntakeWizard = {
       }
     }
 
-    // Step 8: Generate review summary
-    if (stepNum === 8) {
-      this.generateReviewSummary();
-    }
+    // Step 8: Review summary removed - keeping lifestyle/medications fields only
   },
 
   /**
