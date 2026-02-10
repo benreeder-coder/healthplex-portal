@@ -7,6 +7,7 @@ const IntakeWizard = {
   currentStep: 1,
   totalSteps: 8,
   stepValidation: {},
+  blankStepDismissed: {},
   startTime: null,
   stepNames: [
     '',  // index 0 unused
@@ -136,6 +137,14 @@ const IntakeWizard = {
       this.stepValidation[this.currentStep] = true;
       this.saveProgress();
 
+      // Warn if step 3-7 is completely blank (and user hasn't already dismissed)
+      if (this.currentStep >= 3 && this.currentStep <= 7
+          && !this.blankStepDismissed[this.currentStep]
+          && this.isStepBlank(this.currentStep)) {
+        this.showBlankStepWarning(this.currentStep);
+        return;
+      }
+
       if (this.currentStep < this.totalSteps) {
         this.showStep(this.currentStep + 1);
       }
@@ -213,6 +222,129 @@ const IntakeWizard = {
     }
 
     return valid;
+  },
+
+  /**
+   * Check if a step has no meaningful user input
+   */
+  isStepBlank(stepNum) {
+    const stepEl = document.querySelector(`.wizard-step[data-step="${stepNum}"]`);
+    if (!stepEl) return false;
+
+    switch (stepNum) {
+      case 3: {
+        // Checkboxes (excluding the required spouse attendance one)
+        const checkboxes = stepEl.querySelectorAll('input[type="checkbox"]:not(#spouseAttendanceConfirm)');
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        // Textareas
+        const textareas = stepEl.querySelectorAll('textarea');
+        const anyTextFilled = Array.from(textareas).some(ta => ta.value.trim() !== '');
+        // Commitment rating scales (importance, coachable, prepared)
+        const ratings = stepEl.querySelectorAll('.rating-scale input[type="radio"]:checked');
+        const anyRatingSelected = ratings.length > 0;
+        return !anyChecked && !anyTextFilled && !anyRatingSelected;
+      }
+      case 4: {
+        // Family condition checkboxes
+        const checkboxes = stepEl.querySelectorAll('input[type="checkbox"]');
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        // Age / death age numbers
+        const numberInputs = stepEl.querySelectorAll('input[type="number"]');
+        const anyNumberFilled = Array.from(numberInputs).some(inp => inp.value !== '');
+        // Custom condition text inputs
+        const textInputs = stepEl.querySelectorAll('input[type="text"]');
+        const anyTextFilled = Array.from(textInputs).some(inp => inp.value.trim() !== '');
+        return !anyChecked && !anyNumberFilled && !anyTextFilled;
+      }
+      case 5:
+      case 6:
+      case 7: {
+        // All symptom radios default to 0 — check if every checked radio is still 0
+        const checkedRadios = stepEl.querySelectorAll('.severity-scale input[type="radio"]:checked');
+        if (checkedRadios.length === 0) return true;
+        return Array.from(checkedRadios).every(r => r.value === '0');
+      }
+      default:
+        return false;
+    }
+  },
+
+  /**
+   * Show a gentle warning when the user tries to skip a blank step
+   */
+  showBlankStepWarning(stepNum) {
+    const existing = document.querySelector('.blank-step-modal');
+    if (existing) existing.remove();
+
+    const stepName = this.stepNames[stepNum];
+    const isSymptomStep = stepNum >= 5 && stepNum <= 7;
+
+    const message = isSymptomStep
+      ? 'All symptoms on this page are currently rated as <strong>0 (Never)</strong>. If that\'s accurate you can continue — otherwise, please take a moment to review your responses.'
+      : 'It looks like you haven\'t filled in any fields on this page. Would you like to take a moment to double-check before continuing?';
+
+    const modal = document.createElement('div');
+    modal.className = 'blank-step-modal';
+    modal.innerHTML = `
+      <div class="blank-step-content">
+        <div class="blank-step-icon">📋</div>
+        <h3>${stepName}</h3>
+        <p class="blank-step-message">${message}</p>
+        <div class="blank-step-actions">
+          <button class="btn btn-primary blank-step-review">Go Back &amp; Review</button>
+          <button class="btn blank-step-continue">Continue Anyway</button>
+        </div>
+      </div>
+    `;
+
+    modal.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); display: flex; align-items: center;
+      justify-content: center; z-index: 10000;
+    `;
+
+    const content = modal.querySelector('.blank-step-content');
+    content.style.cssText = `
+      background: white; padding: 2rem; border-radius: 12px;
+      max-width: 440px; width: 90%; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    `;
+
+    modal.querySelector('.blank-step-icon').style.cssText = 'font-size: 2.5rem; margin-bottom: 0.75rem;';
+    modal.querySelector('h3').style.cssText = 'margin: 0 0 0.75rem; color: #1a9ba0; font-size: 1.25rem; font-family: "Marcellus", serif;';
+    modal.querySelector('.blank-step-message').style.cssText = 'color: #444; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5;';
+    modal.querySelector('.blank-step-actions').style.cssText = 'display: flex; flex-direction: column; gap: 0.75rem;';
+
+    const reviewBtn = modal.querySelector('.blank-step-review');
+    reviewBtn.style.cssText = `
+      background: #1a9ba0; color: white; border: none; padding: 0.75rem 2rem;
+      border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 500;
+    `;
+
+    const continueBtn = modal.querySelector('.blank-step-continue');
+    continueBtn.style.cssText = `
+      background: transparent; color: #666; border: 1px solid #ccc; padding: 0.6rem 2rem;
+      border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+    `;
+
+    // "Go Back & Review" — just close the modal
+    reviewBtn.addEventListener('click', () => modal.remove());
+
+    // "Continue Anyway" — dismiss warning for this step and proceed
+    continueBtn.addEventListener('click', () => {
+      this.blankStepDismissed[stepNum] = true;
+      modal.remove();
+      if (this.currentStep < this.totalSteps) {
+        this.showStep(this.currentStep + 1);
+      }
+    });
+
+    // Close on background click (same as "Go Back")
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+
+    document.body.appendChild(modal);
   },
 
   /**
