@@ -738,7 +738,10 @@ const IntakeWizard = {
         useCORS: true,
         logging: false,
         windowWidth: 700,
-        scrollY: 0
+        scrollY: 0,
+        scrollX: 0,
+        x: 0,
+        y: 0
       },
       jsPDF: {
         unit: 'mm',
