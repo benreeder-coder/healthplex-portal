@@ -597,36 +597,59 @@ const IntakeWizard = {
   },
 
   /**
-   * Generate PDF of the complete form
-   * Returns base64 encoded PDF string
+   * Generate PDF of the complete form using off-screen clone.
+   * Clones the form card, copies all input values, renders off-screen
+   * to avoid overlay occlusion and animation issues.
+   * Returns base64 encoded PDF string.
    */
   async generateFormPDF() {
-    // IMPORTANT: Loading overlay should already be visible (called from handleSubmit)
-    // This hides any visual changes from the user
-
     const formCard = document.querySelector('.form-card');
-    const allSteps = document.querySelectorAll('.wizard-step');
 
-    // Save original states
-    const originalStates = [];
-    allSteps.forEach((step, idx) => {
-      originalStates[idx] = {
-        classList: [...step.classList],
-        display: step.style.display
-      };
+    // 1. Clone the form card (deep clone gets DOM structure but NOT input values)
+    const clone = formCard.cloneNode(true);
+
+    // 2. Copy all form input values from original to clone
+    const origInputs = formCard.querySelectorAll('input, select, textarea');
+    const cloneInputs = clone.querySelectorAll('input, select, textarea');
+    origInputs.forEach((orig, i) => {
+      const target = cloneInputs[i];
+      if (!target) return;
+      if (orig.type === 'checkbox' || orig.type === 'radio') {
+        target.checked = orig.checked;
+        if (orig.checked) target.setAttribute('checked', 'checked');
+        else target.removeAttribute('checked');
+      } else if (orig.tagName === 'SELECT') {
+        target.value = orig.value;
+        // Also set the selected attribute on the correct option
+        const options = target.querySelectorAll('option');
+        options.forEach(opt => {
+          opt.selected = (opt.value === orig.value);
+        });
+      } else {
+        target.value = orig.value;
+        target.setAttribute('value', orig.value);
+      }
+    });
+    // Copy textarea content (value doesn't clone)
+    const origTextareas = formCard.querySelectorAll('textarea');
+    const cloneTextareas = clone.querySelectorAll('textarea');
+    origTextareas.forEach((orig, i) => {
+      if (cloneTextareas[i]) {
+        cloneTextareas[i].textContent = orig.value;
+        cloneTextareas[i].value = orig.value;
+      }
     });
 
-    // Save original visibility of UI elements
-    const elementsToHide = document.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary, .review-section');
-    const hiddenOriginalDisplay = [];
-    elementsToHide.forEach((el, idx) => {
-      hiddenOriginalDisplay[idx] = el.style.display;
-      el.style.display = 'none';
-    });
+    // 3. Create off-screen container
+    const offscreen = document.createElement('div');
+    offscreen.id = 'pdf-offscreen-container';
+    offscreen.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 700px; z-index: -1; overflow: visible;';
+    offscreen.appendChild(clone);
 
-    // Show all steps except step 8 (review)
-    allSteps.forEach((step, idx) => {
-      if (idx < allSteps.length - 1) {
+    // 4. In the clone: show steps 1-7, hide step 8, hide UI chrome
+    const cloneSteps = clone.querySelectorAll('.wizard-step');
+    cloneSteps.forEach((step, idx) => {
+      if (idx < cloneSteps.length - 1) {
         step.classList.add('active');
         step.style.display = 'block';
       } else {
@@ -634,70 +657,78 @@ const IntakeWizard = {
       }
     });
 
-    // Add PDF-specific styles to fix tables and page breaks
-    const pdfStyles = document.createElement('style');
-    pdfStyles.id = 'pdf-temp-styles';
-    pdfStyles.textContent = `
-      /* Make form narrower for PDF */
-      .form-card {
-        max-width: 700px !important;
-      }
+    // Hide navigation, progress bars, review elements in clone
+    clone.querySelectorAll('.wizard-nav, .wizard-progress, .wizard-mobile-progress, .wizard-intro-box, .review-edit-btn, .total-score-card, #review-summary, .review-section').forEach(el => {
+      el.style.display = 'none';
+    });
 
-      /* Family history tables - make columns narrower */
-      .matrix-table {
+    // 5. Scoped style: kill animations/transitions, force opacity, PDF table fixes
+    const pdfStyle = document.createElement('style');
+    pdfStyle.id = 'pdf-offscreen-styles';
+    pdfStyle.textContent = `
+      #pdf-offscreen-container * {
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+      }
+      #pdf-offscreen-container .form-card {
+        max-width: 700px !important;
+        width: 700px !important;
+      }
+      #pdf-offscreen-container .matrix-table {
         font-size: 8px !important;
         table-layout: fixed !important;
         width: 100% !important;
       }
-      .matrix-table th {
+      #pdf-offscreen-container .matrix-table th {
         padding: 4px 2px !important;
         font-size: 7px !important;
         word-wrap: break-word !important;
       }
-      .matrix-table td {
+      #pdf-offscreen-container .matrix-table td {
         padding: 3px 2px !important;
       }
-      .matrix-table td:first-child {
+      #pdf-offscreen-container .matrix-table td:first-child {
         width: 90px !important;
         font-size: 8px !important;
       }
-      .matrix-table input[type="checkbox"] {
+      #pdf-offscreen-container .matrix-table input[type="checkbox"] {
         width: 12px !important;
         height: 12px !important;
       }
-      .matrix-table input[type="text"] {
+      #pdf-offscreen-container .matrix-table input[type="text"] {
         font-size: 7px !important;
         width: 100% !important;
         padding: 1px !important;
       }
-
-      /* PDF page break handling */
-
-      /* Keep all headers with their following content */
-      h2, h3, h4,
-      .wizard-step-header,
-      .form-section h3,
-      .symptom-card h3 {
+      #pdf-offscreen-container h2,
+      #pdf-offscreen-container h3,
+      #pdf-offscreen-container h4,
+      #pdf-offscreen-container .wizard-step-header,
+      #pdf-offscreen-container .form-section h3,
+      #pdf-offscreen-container .symptom-card h3 {
         page-break-after: avoid !important;
         break-after: avoid !important;
       }
-
-      /* Keep form sections and symptom cards together */
-      .form-section,
-      .symptom-card {
+      #pdf-offscreen-container .form-section,
+      #pdf-offscreen-container .symptom-card {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
     `;
-    document.head.appendChild(pdfStyles);
+    document.head.appendChild(pdfStyle);
 
-    // Scroll to top
-    window.scrollTo(0, 0);
+    // 6. Append to body and wait for layout
+    document.body.appendChild(offscreen);
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 100);
+        });
+      });
+    });
 
-    // Wait for DOM to update
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Configure PDF options - simple and reliable
+    // 7. Capture clone with html2pdf
     const opt = {
       margin: [10, 8, 10, 8],
       filename: `intake-form-${Date.now()}.pdf`,
@@ -706,7 +737,8 @@ const IntakeWizard = {
         scale: 2,
         useCORS: true,
         logging: false,
-        scrollY: -window.scrollY
+        windowWidth: 700,
+        scrollY: 0
       },
       jsPDF: {
         unit: 'mm',
@@ -720,8 +752,7 @@ const IntakeWizard = {
     };
 
     try {
-      // Generate PDF directly from the actual form card
-      const pdfBlob = await html2pdf().set(opt).from(formCard).outputPdf('blob');
+      const pdfBlob = await html2pdf().set(opt).from(clone).outputPdf('blob');
 
       // Convert blob to base64
       const base64 = await new Promise((resolve, reject) => {
@@ -736,20 +767,9 @@ const IntakeWizard = {
 
       return base64;
     } finally {
-      // Remove PDF styles
-      const tempStyles = document.getElementById('pdf-temp-styles');
-      if (tempStyles) tempStyles.remove();
-
-      // Restore original step states
-      allSteps.forEach((step, idx) => {
-        step.className = originalStates[idx].classList.join(' ');
-        step.style.display = originalStates[idx].display;
-      });
-
-      // Restore hidden elements
-      elementsToHide.forEach((el, idx) => {
-        el.style.display = hiddenOriginalDisplay[idx];
-      });
+      // 8. Cleanup: remove clone container + temp style. Original DOM untouched.
+      offscreen.remove();
+      pdfStyle.remove();
     }
   },
 
