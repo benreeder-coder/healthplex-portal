@@ -643,7 +643,7 @@ const IntakeWizard = {
     // 3. Create off-screen container
     const offscreen = document.createElement('div');
     offscreen.id = 'pdf-offscreen-container';
-    offscreen.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 700px; z-index: -1; overflow: visible;';
+    offscreen.style.cssText = 'position: absolute; left: 0; top: 0; width: 700px; z-index: -1; overflow: visible;';
     offscreen.appendChild(clone);
 
     // 4. In the clone: show steps 1-7, hide step 8, hide UI chrome
