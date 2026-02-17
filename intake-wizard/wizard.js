@@ -37,22 +37,37 @@ const IntakeWizard = {
     this.setupProgressIndicator();
 
     // Always start fresh - clear any previous progress
-    localStorage.removeItem('healthplex_wizard_progress');
-    localStorage.removeItem('healthplex_draft_intakeWizard');
+    try {
+      localStorage.removeItem('healthplex_wizard_progress');
+      localStorage.removeItem('healthplex_draft_intakeWizard');
+    } catch (error) {
+      console.warn('Could not access localStorage for reset:', error);
+    }
 
     this.showStep(this.currentStep);
+    this.form.classList.add('wizard-ready');
+    this.ensureVisibleStep();
+    setTimeout(() => this.ensureVisibleStep(), 300);
+    window.addEventListener('load', () => this.ensureVisibleStep());
 
     // Initialize FormUtils for the wizard (disable its progress indicator - we have our own)
     if (window.FormUtils) {
       // Temporarily disable progress indicator for the wizard
       const originalSetting = window.HEALTHPLEX_CONFIG?.settings?.showProgressIndicator;
-      if (window.HEALTHPLEX_CONFIG?.settings) {
-        window.HEALTHPLEX_CONFIG.settings.showProgressIndicator = false;
-      }
-      FormUtils.init('intake-wizard-form', 'intakeWizard');
-      // Restore setting
-      if (window.HEALTHPLEX_CONFIG?.settings) {
-        window.HEALTHPLEX_CONFIG.settings.showProgressIndicator = originalSetting;
+      try {
+        if (window.HEALTHPLEX_CONFIG?.settings) {
+          window.HEALTHPLEX_CONFIG.settings.showProgressIndicator = false;
+        }
+        FormUtils.init('intake-wizard-form', 'intakeWizard');
+      } catch (error) {
+        console.error('Form utilities failed to initialize:', error);
+        alert('Form failed to load properly. Please refresh the page.');
+        return;
+      } finally {
+        // Restore setting
+        if (window.HEALTHPLEX_CONFIG?.settings) {
+          window.HEALTHPLEX_CONFIG.settings.showProgressIndicator = originalSetting;
+        }
       }
     }
 
@@ -96,16 +111,26 @@ const IntakeWizard = {
     if (stepNum < 1 || stepNum > this.totalSteps) return;
 
     // Hide all steps
-    document.querySelectorAll('.wizard-step').forEach(step => {
+    this.form.querySelectorAll('.wizard-step').forEach(step => {
       step.classList.remove('active');
     });
 
     // Show target step (use specific class selector to avoid matching progress indicators)
-    const targetStep = document.querySelector(`.wizard-step[data-step="${stepNum}"]`);
-    if (targetStep) {
-      targetStep.classList.add('active');
+    const targetStep = this.form.querySelector(`.wizard-step[data-step="${stepNum}"]`);
+    if (!targetStep) {
+      console.warn(`Wizard step ${stepNum} not found; restoring step 1.`);
+      const fallbackStep = this.form.querySelector('.wizard-step[data-step="1"]');
+      if (!fallbackStep) return;
+      fallbackStep.classList.add('active');
+      this.currentStep = 1;
+      this.updateProgressIndicator();
+      this.updateNavButtons();
+      this.onStepShow(this.currentStep);
+      this.ensureVisibleStep();
+      return;
     }
 
+    targetStep.classList.add('active');
     this.currentStep = stepNum;
     this.updateProgressIndicator();
     this.updateNavButtons();
@@ -113,6 +138,35 @@ const IntakeWizard = {
 
     // Trigger any step-specific initialization
     this.onStepShow(stepNum);
+    this.ensureVisibleStep();
+  },
+
+  /**
+   * Ensure at least one wizard step is visible.
+   * Recovers from edge cases where CSS/JS state hides all steps.
+   */
+  ensureVisibleStep() {
+    if (!this.form) return;
+
+    const steps = this.form.querySelectorAll('.wizard-step');
+    if (!steps.length) return;
+
+    const hasVisibleStep = Array.from(steps).some(step => {
+      const style = window.getComputedStyle(step);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+
+    if (hasVisibleStep) return;
+
+    const fallbackStep = this.form.querySelector('.wizard-step[data-step="1"]') || steps[0];
+    if (!fallbackStep) return;
+
+    steps.forEach(step => step.classList.remove('active'));
+    fallbackStep.classList.add('active');
+    this.currentStep = parseInt(fallbackStep.dataset.step, 10) || 1;
+    this.updateProgressIndicator();
+    this.updateNavButtons();
+    console.warn('Wizard visibility fail-safe activated: restored visible step.');
   },
 
   /**

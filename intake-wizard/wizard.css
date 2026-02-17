@@ -153,6 +153,15 @@
 
 .wizard-step.active {
   display: block;
+  visibility: visible;
+}
+
+/* Fail-safe: keep the first step visible until JS marks wizard as ready */
+#intake-wizard-form:not(.wizard-ready) .wizard-step[data-step="1"] {
+  display: block;
+  opacity: 1;
+  transform: none;
+  visibility: visible;
 }
 
 @keyframes wizardFadeIn {
@@ -163,6 +172,12 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-step {
+    animation: none;
   }
 }
 
