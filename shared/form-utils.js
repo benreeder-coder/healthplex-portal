@@ -168,6 +168,42 @@ const METABOLIC_QUESTIONS = {
   q135: "Depression/mood changes"
 };
 
+// Male-specific questions (Cat XII: Male - Prostate/Andropause)
+// HTML form uses q100-q113 (q108 skipped)
+const MALE_QUESTIONS = {
+  q100: "Urination difficulty or dribbling",
+  q101: "Frequent urination",
+  q102: "Pain inside of legs or heels",
+  q103: "Feeling of incomplete bowel emptying",
+  q104: "Leg twitching at night",
+  q105: "Decreased libido",
+  q106: "Decreased spontaneous morning erections",
+  q107: "Decreased fullness of erections",
+  q109: "Spells of mental fatigue",
+  q110: "Inability to concentrate",
+  q111: "Episodes of depression",
+  q112: "Muscle soreness",
+  q113: "Decreased physical stamina"
+};
+
+// Female-specific questions (Cat XIII: Female - Estrogen/Progesterone & Menopause)
+// HTML form uses q122-q138 (with gaps: q126, q130-132 skipped)
+const FEMALE_QUESTIONS = {
+  q122: "Pain and cramping during periods",
+  q123: "Scanty blood flow",
+  q124: "Heavy blood flow",
+  q125: "Breast pain and swelling during menses",
+  q127: "Irritable and depressed during menses",
+  q128: "Acne",
+  q129: "Facial hair growth",
+  q133: "Hot flashes",
+  q134: "Mental fogginess",
+  q135: "Disinterest in sex",
+  q136: "Mood swings",
+  q137: "Depression",
+  q138: "Painful intercourse"
+};
+
 const FormUtils = {
   /**
    * Sanitize string values for JSON compatibility
@@ -786,8 +822,9 @@ const FormUtils = {
     };
 
     // Male-specific questions (if applicable)
+    // Note: HTML form uses q100-q113 for male questions (q108 skipped)
     if (data.sex === 'male') {
-      const maleQuestions = [116, 117, 118, 119, 120, 121, 122, 123];
+      const maleQuestions = [100, 101, 102, 103, 104, 105, 106, 107, 109, 110, 111, 112, 113];
       let maleSubtotal = 0;
       maleQuestions.forEach(q => {
         const value = parseInt(data[`q${q}`]) || 0;
@@ -800,14 +837,19 @@ const FormUtils = {
     }
 
     // Female-specific questions (if applicable)
+    // Note: HTML form uses q122-q138 for female questions (with gaps)
     if (data.sex === 'female') {
-      const femaleQuestions = [124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135];
+      const femaleQuestions = [122, 123, 124, 125, 127, 128, 129, 133, 134, 135, 136, 137, 138];
       let femaleSubtotal = 0;
       femaleQuestions.forEach(q => {
         const value = parseInt(data[`q${q}`]) || 0;
         payload.genderSpecific.responses[`q${q}`] = value;
         femaleSubtotal += value;
       });
+      // Also capture yes/no and numeric fields for females
+      payload.genderSpecific.perimenopausal = data.perimenopausal || 'no';
+      payload.genderSpecific.altCycle = data.alt_cycle || 'no';
+      payload.genderSpecific.menopausalYears = parseInt(data.menopausal_years) || 0;
       payload.genderSpecific.subtotal = femaleSubtotal;
       payload.genderSpecific.categoryName = 'Female Hormones';
       grandTotal += femaleSubtotal;
@@ -1138,13 +1180,14 @@ const FormUtils = {
     });
 
     // Gender-specific sections
+    // Note: HTML form uses q100-q113 for male questions (q108 skipped)
     if (data.sex === 'male') {
-      const maleQuestions = [116, 117, 118, 119, 120, 121, 122, 123];
+      const maleQuestions = [100, 101, 102, 103, 104, 105, 106, 107, 109, 110, 111, 112, 113];
       let maleSubtotal = 0;
       maleQuestions.forEach(q => {
         const value = parseInt(data[`q${q}`]) || 0;
         payload.metabolicAssessment.genderSpecific.responses[`q${q}`] = {
-          text: METABOLIC_QUESTIONS[`q${q}`] || `Question ${q}`,
+          text: MALE_QUESTIONS[`q${q}`] || `Question ${q}`,
           score: value
         };
         maleSubtotal += value;
@@ -1154,17 +1197,22 @@ const FormUtils = {
       grandTotal += maleSubtotal;
     }
 
+    // Note: HTML form uses q122-q138 for female questions (with gaps)
     if (data.sex === 'female') {
-      const femaleQuestions = [124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135];
+      const femaleQuestions = [122, 123, 124, 125, 127, 128, 129, 133, 134, 135, 136, 137, 138];
       let femaleSubtotal = 0;
       femaleQuestions.forEach(q => {
         const value = parseInt(data[`q${q}`]) || 0;
         payload.metabolicAssessment.genderSpecific.responses[`q${q}`] = {
-          text: METABOLIC_QUESTIONS[`q${q}`] || `Question ${q}`,
+          text: FEMALE_QUESTIONS[`q${q}`] || `Question ${q}`,
           score: value
         };
         femaleSubtotal += value;
       });
+      // Also capture yes/no and numeric fields for females
+      payload.metabolicAssessment.genderSpecific.perimenopausal = data.perimenopausal || 'no';
+      payload.metabolicAssessment.genderSpecific.altCycle = data.alt_cycle || 'no';
+      payload.metabolicAssessment.genderSpecific.menopausalYears = parseInt(data.menopausal_years) || 0;
       payload.metabolicAssessment.genderSpecific.subtotal = femaleSubtotal;
       payload.metabolicAssessment.genderSpecific.categoryName = 'Female Hormones';
       grandTotal += femaleSubtotal;
@@ -1424,6 +1472,7 @@ const FormUtils = {
         <h2 style="font-family: 'Marcellus', serif; font-size: 32px; color: #1a9ba0; margin-bottom: 15px;">Thank You!</h2>
         <p style="font-size: 18px; color: #333; margin-bottom: 10px;">Your intake form has been submitted successfully.</p>
         <p style="font-size: 16px; color: #666;">The Healthplex team will review your information and be in touch soon.</p>
+        ${window._intakeWizardPDFFailed ? '<p style="font-size: 14px; color: #999; margin-top: 15px;">PDF generation encountered an issue. The team will follow up if needed.</p>' : ''}
       </div>
     `;
 

@@ -652,6 +652,11 @@ const IntakeWizard = {
       if (idx < cloneSteps.length - 1) {
         step.classList.add('active');
         step.style.display = 'block';
+        // Force inline styles to bypass CSS animation race condition
+        // (wizardFadeIn starts at opacity:0 - inline styles override it immediately)
+        step.style.opacity = '1';
+        step.style.animation = 'none';
+        step.style.transform = 'none';
       } else {
         step.style.display = 'none';
       }
@@ -718,12 +723,13 @@ const IntakeWizard = {
     `;
     document.head.appendChild(pdfStyle);
 
-    // 6. Append to body and wait for layout
+    // 6. Append to body and wait for fonts + layout + paint
     document.body.appendChild(offscreen);
+    await document.fonts.ready;
     await new Promise(resolve => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setTimeout(resolve, 100);
+          setTimeout(resolve, 500);
         });
       });
     });
@@ -755,7 +761,29 @@ const IntakeWizard = {
     };
 
     try {
-      const pdfBlob = await html2pdf().set(opt).from(clone).outputPdf('blob');
+      // Retry loop: blank PDFs are ~2-3KB, real content is 50KB+
+      const MIN_PDF_SIZE = 5000;
+      const MAX_ATTEMPTS = 3;
+      const RETRY_DELAYS = [500, 1500, 3000];
+      let pdfBlob;
+
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        pdfBlob = await html2pdf().set(opt).from(clone).outputPdf('blob');
+
+        if (pdfBlob.size > MIN_PDF_SIZE) {
+          break;
+        }
+
+        console.warn(`PDF attempt ${attempt + 1} produced ${pdfBlob.size} bytes (likely blank), retrying...`);
+
+        if (attempt < MAX_ATTEMPTS - 1) {
+          await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+        }
+      }
+
+      if (pdfBlob.size <= MIN_PDF_SIZE) {
+        console.error(`PDF still only ${pdfBlob.size} bytes after ${MAX_ATTEMPTS} attempts`);
+      }
 
       // Convert blob to base64
       const base64 = await new Promise((resolve, reject) => {
@@ -887,9 +915,11 @@ const IntakeWizard = {
         const pdfBase64 = await this.generateFormPDF();
         console.log('PDF generated, size:', Math.round(pdfBase64.length / 1024), 'KB');
         window._intakeWizardPDF = pdfBase64;
+        window._intakeWizardPDFFailed = false;
       } catch (pdfError) {
-        console.warn('PDF generation failed, continuing without PDF:', pdfError);
+        console.error('PDF generation failed:', pdfError);
         window._intakeWizardPDF = null;
+        window._intakeWizardPDFFailed = true;
       }
 
       // Check if already timed out
