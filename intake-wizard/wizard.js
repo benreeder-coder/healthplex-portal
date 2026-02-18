@@ -815,42 +815,72 @@ const IntakeWizard = {
     };
 
     try {
-      // Retry loop: blank PDFs are ~2-3KB, real content is 50KB+
+      // Retry loop with both size check AND pixel content verification.
+      // White JPEG pages easily exceed 5 KB at 0.95 quality, so size alone
+      // is not sufficient to detect blank renders.
       const MIN_PDF_SIZE = 5000;
       const MAX_ATTEMPTS = 3;
-      const RETRY_DELAYS = [500, 1500, 3000];
+      const RETRY_DELAYS = [800, 2000, 4000];
       let pdfBlob;
+      let isBlank = true;
 
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         pdfBlob = await html2pdf().set(opt).from(clone).outputPdf('blob');
 
-        if (pdfBlob.size > MIN_PDF_SIZE) {
+        if (pdfBlob.size <= MIN_PDF_SIZE) {
+          console.warn(`PDF attempt ${attempt + 1}: ${pdfBlob.size} bytes (too small), retrying...`);
+          if (attempt < MAX_ATTEMPTS - 1) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+          continue;
+        }
+
+        // Pixel verification: render a 100x100 sample of the clone and check
+        // whether it contains any non-white pixels.
+        try {
+          const sampleCanvas = await html2canvas(clone, {
+            scale: 1,
+            width: 100,
+            height: 100,
+            windowWidth: 700,
+            logging: false,
+            x: 0,
+            y: 0
+          });
+          const ctx = sampleCanvas.getContext('2d');
+          const imageData = ctx.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height);
+          const pixels = imageData.data; // RGBA flat array
+          let coloredPixels = 0;
+          const totalPixels = pixels.length / 4;
+          for (let i = 0; i < pixels.length; i += 4) {
+            // A pixel is "colored" if any channel is meaningfully below 255
+            if (pixels[i] < 245 || pixels[i + 1] < 245 || pixels[i + 2] < 245) {
+              coloredPixels++;
+            }
+          }
+          const colorRatio = coloredPixels / totalPixels;
+          console.log(`PDF attempt ${attempt + 1}: ${pdfBlob.size} bytes, ${(colorRatio * 100).toFixed(1)}% colored pixels`);
+
+          if (colorRatio >= 0.01) {
+            // At least 1% of sampled pixels have color = real content
+            isBlank = false;
+            break;
+          }
+        } catch (sampleErr) {
+          // If pixel sampling fails, trust the size check and proceed
+          console.warn('Pixel verification failed, trusting size check:', sampleErr);
+          isBlank = false;
           break;
         }
 
-        console.warn(`PDF attempt ${attempt + 1} produced ${pdfBlob.size} bytes (likely blank), retrying...`);
-
-        if (attempt < MAX_ATTEMPTS - 1) {
-          await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
-        }
+        console.warn(`PDF attempt ${attempt + 1}: content appears blank despite ${pdfBlob.size} bytes, retrying...`);
+        if (attempt < MAX_ATTEMPTS - 1) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
       }
 
-      if (pdfBlob.size <= MIN_PDF_SIZE) {
-        console.error(`PDF still only ${pdfBlob.size} bytes after ${MAX_ATTEMPTS} attempts`);
+      if (isBlank) {
+        console.error(`PDF still blank after ${MAX_ATTEMPTS} attempts`);
+        return null;
       }
 
-      // Convert blob to base64
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = reader.result.split(',')[1];
-          resolve(base64String);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(pdfBlob);
-      });
-
-      return base64;
+      return pdfBlob;
     } finally {
       // 8. Cleanup: remove clone container + temp style. Original DOM untouched.
       offscreen.remove();
@@ -963,16 +993,38 @@ const IntakeWizard = {
     }, TIMEOUT_MS);
 
     try {
-      // Generate PDF before submission (optional - don't block if fails)
+      // Generate PDF and upload to Vercel Blob (non-blocking - form submits even if this fails)
       try {
         console.log('Generating PDF of intake form...');
-        const pdfBase64 = await this.generateFormPDF();
-        console.log('PDF generated, size:', Math.round(pdfBase64.length / 1024), 'KB');
-        window._intakeWizardPDF = pdfBase64;
-        window._intakeWizardPDFFailed = false;
+        const pdfBlob = await this.generateFormPDF();
+
+        if (pdfBlob && !timedOut) {
+          console.log('PDF generated, size:', Math.round(pdfBlob.size / 1024), 'KB');
+          this.updateLoadingMessage('Uploading PDF...');
+
+          const lastName = (this.form.querySelector('[name="lastName"]')?.value || 'patient').trim();
+          const resp = await fetch('/api/upload-pdf/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/pdf',
+              'X-Patient-Name': lastName
+            },
+            body: pdfBlob
+          });
+
+          if (!resp.ok) throw new Error(`Upload returned ${resp.status}`);
+          const { url } = await resp.json();
+          console.log('PDF uploaded, URL:', url);
+          window._intakeWizardPDFUrl = url;
+          window._intakeWizardPDFFailed = false;
+        } else {
+          // generateFormPDF returned null (blank after retries)
+          window._intakeWizardPDFUrl = null;
+          window._intakeWizardPDFFailed = true;
+        }
       } catch (pdfError) {
-        console.error('PDF generation failed:', pdfError);
-        window._intakeWizardPDF = null;
+        console.error('PDF generation/upload failed:', pdfError);
+        window._intakeWizardPDFUrl = null;
         window._intakeWizardPDFFailed = true;
       }
 

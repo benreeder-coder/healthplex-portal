@@ -13,8 +13,9 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Transcripts and private docs (keep vercel.json)
+# Transcripts and private docs (keep vercel.json, package-lock.json)
 *-*.json
+!package-lock.json
 email.txt
 *.pdf
 init_meeting.txt
@@ -24,3 +25,5 @@ Screenshot*.png
 Forms/
 
 .vercel
+
+.env*.local
