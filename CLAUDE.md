@@ -84,3 +84,15 @@ Ryan Healthplex is a virtual functional medicine practice. Sales funnel:
 2. Free 15-min discovery call
 3. $87 one-hour consultation (CWE)
 4. $8,000 avg six-month wellness program
+
+## Session Context
+
+> Last updated: 2026-02-25
+
+### Active Work
+1. [P0] Wire n8n intake: pdfUrl -> GET file -> POST to GHL -> POST /api/delete-pdf cleanup
+2. [BLOCKED] Lab interpreter - waiting on Ryan for lab names, sample PDFs, output templates
+3. [P1] Lab interpreter GHL custom fields + workflow triggers (depends on #2)
+
+### Recently Completed
+- Repo cleanup: removed ~70 untracked junk files, 7 tracked scratch files, tightened .gitignore

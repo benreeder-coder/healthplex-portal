@@ -4,26 +4,60 @@ node_modules/
 # Environment variables
 .env
 .env.local
+.env*.local
 
 # OS files
 .DS_Store
 Thumbs.db
+nul
 
 # IDE
 .vscode/
 .idea/
 
+# Vercel
+.vercel
+
 # Transcripts and private docs (keep vercel.json, package-lock.json)
 *-*.json
 !package-lock.json
 email.txt
-*.pdf
 init_meeting.txt
-Screenshot*.png
+
+# Claude Code temp/session files
+tmpclaude-*
+.claude/session-log.md
+.claude/settings.local.json
+
+# Screenshots and images (not app assets)
+*.png
+
+# Test/scratch files
+*.bat
+*.pdf
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Session/scratch docs
+PROJECT_RESUME.md
+Claude_Codex.MD
+
+# n8n scratch exports
+n8n_*.json
+n8n_*.js
+n8n_*.txt
+
+# GHL scratch
+ghl_*.txt
+custom_fields_init.json
+all_form_fields.txt
+*_output.json
+
+# Other scratch
+ava_*
+MISSING_GHL_FIELDS.md
+ARLO.md
 
 # Temp folders
 Forms/
-
-.vercel
-
-.env*.local
