@@ -788,99 +788,76 @@ const IntakeWizard = {
       });
     });
 
-    // 7. Capture clone with html2pdf
-    const opt = {
-      margin: [10, 8, 10, 8],
-      filename: `intake-form-${Date.now()}.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 700,
-        scrollY: 0,
-        scrollX: 0,
-        x: 0,
-        y: 0
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      },
-      pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy'],
-        avoid: ['.form-section', '.symptom-card', '.matrix-table', 'h2', 'h3', 'h4', '.wizard-step-header', '.symptom-card h3']
-      }
-    };
+    // 7. Render each page independently via html2canvas to avoid canvas size limits.
+    // A single full-height canvas (e.g. 1400x88000) exceeds GPU texture limits in many
+    // browsers, causing silent data corruption beyond ~16000-32000px. Per-page rendering
+    // keeps each canvas small (~1400x2000) and guarantees correct content on every page.
+    const MARGIN = [10, 8, 10, 8]; // [top, right, bottom, left] in mm
+    const A4_W = 210; // mm
+    const A4_H = 297; // mm
+    const CONTENT_W = A4_W - MARGIN[1] - MARGIN[3]; // 194 mm
+    const CONTENT_H = A4_H - MARGIN[0] - MARGIN[2]; // 277 mm
+    const SCALE = 2;
+    const WINDOW_W = 700;
 
     try {
-      // Retry loop with both size check AND pixel content verification.
-      // White JPEG pages easily exceed 5 KB at 0.95 quality, so size alone
-      // is not sufficient to detect blank renders.
-      const MIN_PDF_SIZE = 5000;
-      const MAX_ATTEMPTS = 3;
-      const RETRY_DELAYS = [800, 2000, 4000];
-      let pdfBlob;
-      let isBlank = true;
+      // Calculate page dimensions in source (CSS) pixels
+      const pxPerMm = (WINDOW_W * SCALE) / CONTENT_W; // canvas px per mm
+      const pageHeightSrc = Math.floor(CONTENT_H * WINDOW_W / CONTENT_W); // ~999 CSS px per page
+      const cloneHeight = clone.scrollHeight;
+      const totalPages = Math.ceil(cloneHeight / pageHeightSrc);
+      console.log(`PDF: ${totalPages} pages, clone ${WINDOW_W}x${cloneHeight}, pageHeightSrc=${pageHeightSrc}`);
 
-      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        pdfBlob = await html2pdf().set(opt).from(clone).outputPdf('blob');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-        if (pdfBlob.size <= MIN_PDF_SIZE) {
-          console.warn(`PDF attempt ${attempt + 1}: ${pdfBlob.size} bytes (too small), retrying...`);
-          if (attempt < MAX_ATTEMPTS - 1) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
-          continue;
-        }
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
 
-        // Pixel verification: render a 100x100 sample of the clone and check
-        // whether it contains any non-white pixels.
-        try {
-          const sampleCanvas = await html2canvas(clone, {
-            scale: 1,
-            width: 100,
-            height: 100,
-            windowWidth: 700,
-            logging: false,
-            x: 0,
-            y: 0
-          });
-          const ctx = sampleCanvas.getContext('2d');
-          const imageData = ctx.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height);
-          const pixels = imageData.data; // RGBA flat array
-          let coloredPixels = 0;
-          const totalPixels = pixels.length / 4;
-          for (let i = 0; i < pixels.length; i += 4) {
-            // A pixel is "colored" if any channel is meaningfully below 255
-            if (pixels[i] < 245 || pixels[i + 1] < 245 || pixels[i + 2] < 245) {
-              coloredPixels++;
+        const srcY = page * pageHeightSrc;
+        const srcH = Math.min(pageHeightSrc, cloneHeight - srcY);
+
+        // Render just this page's vertical strip
+        const pageCanvas = await html2canvas(clone, {
+          scale: SCALE,
+          useCORS: true,
+          logging: false,
+          windowWidth: WINDOW_W,
+          y: srcY,
+          height: srcH,
+          width: WINDOW_W,
+          scrollY: 0,
+          scrollX: 0,
+          x: 0
+        });
+
+        // Pixel verification on first page only
+        if (page === 0) {
+          try {
+            const ctx = pageCanvas.getContext('2d');
+            const sample = ctx.getImageData(0, 0, Math.min(200, pageCanvas.width), Math.min(200, pageCanvas.height));
+            const px = sample.data;
+            let colored = 0;
+            for (let i = 0; i < px.length; i += 4) {
+              if (px[i] < 245 || px[i + 1] < 245 || px[i + 2] < 245) colored++;
             }
+            const ratio = colored / (px.length / 4);
+            console.log(`Page 1 canvas ${pageCanvas.width}x${pageCanvas.height}, ${(ratio * 100).toFixed(1)}% colored`);
+            if (ratio < 0.01) {
+              console.error('First page canvas appears blank');
+              return null;
+            }
+          } catch (e) {
+            console.warn('Pixel check failed, proceeding:', e);
           }
-          const colorRatio = coloredPixels / totalPixels;
-          console.log(`PDF attempt ${attempt + 1}: ${pdfBlob.size} bytes, ${(colorRatio * 100).toFixed(1)}% colored pixels`);
-
-          if (colorRatio >= 0.01) {
-            // At least 1% of sampled pixels have color = real content
-            isBlank = false;
-            break;
-          }
-        } catch (sampleErr) {
-          // If pixel sampling fails, trust the size check and proceed
-          console.warn('Pixel verification failed, trusting size check:', sampleErr);
-          isBlank = false;
-          break;
         }
 
-        console.warn(`PDF attempt ${attempt + 1}: content appears blank despite ${pdfBlob.size} bytes, retrying...`);
-        if (attempt < MAX_ATTEMPTS - 1) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+        const imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+        const sliceHeightMm = (pageCanvas.height / pxPerMm);
+        pdf.addImage(imgData, 'JPEG', MARGIN[3], MARGIN[0], CONTENT_W, sliceHeightMm);
       }
 
-      if (isBlank) {
-        console.error(`PDF still blank after ${MAX_ATTEMPTS} attempts`);
-        return null;
-      }
-
-      return pdfBlob;
+      return pdf.output('blob');
     } finally {
       // 8. Cleanup: remove clone container + temp style. Original DOM untouched.
       offscreen.remove();
