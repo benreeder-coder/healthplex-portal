@@ -961,8 +961,8 @@ const IntakeWizard = {
     const submitBtn = this.form.querySelector('.wizard-nav-submit');
     if (submitBtn) submitBtn.disabled = true;
 
-    // Timeout protection - 30 seconds max wait
-    const TIMEOUT_MS = 30000;
+    // Timeout protection - 90 seconds max wait (PDF generation renders each page individually)
+    const TIMEOUT_MS = 90000;
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
