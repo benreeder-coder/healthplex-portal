@@ -699,10 +699,10 @@ const IntakeWizard = {
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(100, 100, 100);
-      pdf.text(label + ':', M.left, y);
+      pdf.text(label + ':  ', M.left, y);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(33, 33, 33);
-      const labelW = pdf.getTextWidth(label + ': ');
+      const labelW = pdf.getTextWidth(label + ':  ');
       const lines = pdf.splitTextToSize(String(value), CONTENT_W - labelW);
       if (lines.length === 1) {
         pdf.text(lines[0], M.left + labelW, y);
@@ -945,6 +945,27 @@ const IntakeWizard = {
     // Gallbladder
     const gb = form.querySelector('[name="gallbladder_removed"]:checked');
     if (gb && gb.value === 'yes') addField('Gallbladder Removed', 'Yes');
+
+    // === STEP 8: Lifestyle, Medications & Review ===
+    addSection('Lifestyle & Diet');
+    addField('Alcohol / week', getVal('alcoholPerWeek'));
+    addField('Caffeine / day', getVal('caffeinePerDay'));
+    addField('Eat out / week', getVal('eatOutPerWeek'));
+    addField('Work out / week', getVal('workOutPerWeek'));
+    addField('Stress level (1-10)', getVal('stressLevel'));
+    const smoke = form.querySelector('[name="smoke"]:checked');
+    if (smoke) addField('Smoker', smoke.value === 'yes' ? 'Yes' : 'No');
+    const worstFoods = [getVal('worstFood1'), getVal('worstFood2'), getVal('worstFood3')].filter(Boolean);
+    if (worstFoods.length) addField('Worst foods', worstFoods.join(', '));
+    const healthyFoods = [getVal('healthyFood1'), getVal('healthyFood2'), getVal('healthyFood3')].filter(Boolean);
+    if (healthyFoods.length) addField('Healthiest foods', healthyFoods.join(', '));
+    y += 4;
+
+    addSection('Medications & Supplements');
+    addTextBlock('Medications', getVal('medications'));
+    addTextBlock('Supplements', getVal('supplements'));
+
+    addField('Electronic consent', getVal('electronicConsent'));
 
     console.log('Text-based PDF generated successfully');
     return pdf.output('blob');
