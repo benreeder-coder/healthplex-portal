@@ -651,6 +651,306 @@ const IntakeWizard = {
   },
 
   /**
+   * Generate a text-based PDF using jsPDF only (no html2canvas).
+   * Uses structured form data to create a clean, guaranteed-to-work PDF.
+   * Fallback when html2canvas rendering fails.
+   */
+  generateTextPDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const form = this.form;
+    const PAGE_W = 210, PAGE_H = 297;
+    const M = { top: 15, left: 15, right: 15, bottom: 15 };
+    const CONTENT_W = PAGE_W - M.left - M.right;
+    let y = M.top;
+
+    const checkPage = (needed) => {
+      if (y + needed > PAGE_H - M.bottom) {
+        pdf.addPage();
+        y = M.top;
+      }
+    };
+
+    const addTitle = (text) => {
+      checkPage(14);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(26, 155, 160); // teal
+      pdf.text(text, PAGE_W / 2, y, { align: 'center' });
+      y += 10;
+    };
+
+    const addSection = (text) => {
+      checkPage(12);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(51, 51, 51);
+      pdf.text(text, M.left, y);
+      y += 2;
+      pdf.setDrawColor(26, 155, 160);
+      pdf.setLineWidth(0.5);
+      pdf.line(M.left, y, M.left + CONTENT_W, y);
+      y += 6;
+    };
+
+    const addField = (label, value) => {
+      if (!value) return;
+      checkPage(8);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(label + ':', M.left, y);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(33, 33, 33);
+      const labelW = pdf.getTextWidth(label + ': ');
+      const lines = pdf.splitTextToSize(String(value), CONTENT_W - labelW);
+      if (lines.length === 1) {
+        pdf.text(lines[0], M.left + labelW, y);
+        y += 5;
+      } else {
+        y += 5;
+        lines.forEach(line => {
+          checkPage(5);
+          pdf.text(line, M.left + 4, y);
+          y += 4.5;
+        });
+        y += 1;
+      }
+    };
+
+    const addTextBlock = (label, value) => {
+      if (!value) return;
+      checkPage(14);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(label + ':', M.left, y);
+      y += 5;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(33, 33, 33);
+      const lines = pdf.splitTextToSize(String(value), CONTENT_W - 4);
+      lines.forEach(line => {
+        checkPage(5);
+        pdf.text(line, M.left + 4, y);
+        y += 4.5;
+      });
+      y += 2;
+    };
+
+    const getVal = (name) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      return el ? el.value?.trim() : '';
+    };
+
+    const getChecked = (name) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      return el ? el.checked : false;
+    };
+
+    // === HEADER ===
+    addTitle('The Healthplex - Client Intake Form');
+    y += 2;
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(120, 120, 120);
+    pdf.text('Submitted: ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), PAGE_W / 2, y, { align: 'center' });
+    y += 8;
+
+    // === STEP 1: Patient Info ===
+    addSection('Patient Information');
+    addField('Name', [getVal('firstName'), getVal('middleName'), getVal('lastName')].filter(Boolean).join(' '));
+    addField('Address', [getVal('street'), getVal('city'), getVal('state'), getVal('zip')].filter(Boolean).join(', '));
+    addField('Phone', getVal('phone'));
+    addField('Email', getVal('email'));
+    addField('Birth Date', getVal('birthDate'));
+    addField('Age', getVal('age'));
+    addField('Sex', getVal('sex'));
+    addField('Marital Status', getVal('maritalStatus'));
+    addField('Occupation', getVal('occupation'));
+    addField('Employer', getVal('employer'));
+    addField('Physician', getVal('currentPhysician'));
+    addField('Physician City', getVal('physicianCity'));
+    addField('Referred By', getVal('referredBy'));
+    y += 4;
+
+    // === STEP 2: Health Concerns ===
+    addSection('Health Concerns');
+    addField('Complaint 1', getVal('complaint1'));
+    addField('Complaint 2', getVal('complaint2'));
+    addField('Complaint 3', getVal('complaint3'));
+    addField('Complaint 4', getVal('complaint4'));
+    addField('Duration', getVal('problemDuration'));
+    addField('Other Complaints', getVal('otherComplaints'));
+    addField('Height', getVal('height'));
+    addField('Weight', getVal('weight'));
+
+    const improvements = [];
+    ['digestion', 'sleep', 'wellbeing', 'energy'].forEach(imp => {
+      if (getChecked('improvement_' + imp)) improvements.push(imp.charAt(0).toUpperCase() + imp.slice(1));
+    });
+    if (improvements.length) addField('Desired Improvements', improvements.join(', '));
+
+    addTextBlock('What has not worked', getVal('triedNotWorked'));
+    addTextBlock('Feeling discouraged about', getVal('discouraged'));
+    addTextBlock('Worst feeling', getVal('worstFeeling'));
+    addTextBlock('Body functions to improve', getVal('bodyFunctions'));
+    y += 4;
+
+    // === STEP 3: Commitment & Vision ===
+    addSection('Commitment & Vision');
+    addField('Impact on work', getVal('impact_work'));
+    addField('Impact on family', getVal('impact_family'));
+    addField('Impact on hobbies', getVal('impact_hobbies'));
+    addField('Impact on life', getVal('impact_life'));
+    addField('Feels older than age', getVal('feelsOlder'));
+    addField('Visit purpose', getVal('visitPurpose'));
+
+    const pastCare = [];
+    ['medications', 'holistic', 'routine', 'vitamins', 'exercise', 'chiropractic', 'diet'].forEach(c => {
+      if (getChecked('pastCare_' + c)) pastCare.push(c.charAt(0).toUpperCase() + c.slice(1));
+    });
+    if (pastCare.length) addField('Past care methods', pastCare.join(', '));
+    addTextBlock('Results of previous methods', getVal('previousMethodsResults'));
+
+    const fears = [];
+    ['job', 'kids', 'marriage', 'sleep', 'freedom', 'abilities', 'finances', 'time'].forEach(f => {
+      if (getChecked('fear_' + f)) fears.push(f.charAt(0).toUpperCase() + f.slice(1));
+    });
+    if (fears.length) addField('Fear areas', fears.join(', '));
+
+    const fearConds = [];
+    ['abilities', 'surgery', 'stress', 'arthritis', 'weight', 'cancer', 'heart', 'diabetes', 'depression'].forEach(f => {
+      if (getChecked('fearCondition_' + f)) fearConds.push(f.charAt(0).toUpperCase() + f.slice(1));
+    });
+    if (fearConds.length) addField('Feared conditions', fearConds.join(', '));
+    addTextBlock('Future without help', getVal('futureWithoutHelp'));
+
+    const better = [];
+    ['stress', 'sleep', 'energy', 'work', 'esteem', 'outlook', 'confidence', 'family'].forEach(b => {
+      if (getChecked('better_' + b)) better.push(b.charAt(0).toUpperCase() + b.slice(1));
+    });
+    if (better.length) addField('Positive outcomes', better.join(', '));
+    addTextBlock('Three-year vision', getVal('threeYearVision'));
+    addTextBlock('Barriers', getVal('barriers'));
+    addTextBlock('Overcoming barriers', getVal('overcomingBarriers'));
+    addTextBlock('Strengths', getVal('strengths'));
+    addField('Importance (1-10)', getVal('importance'));
+    addField('Coachable (1-10)', getVal('coachable'));
+    addField('Prepared (1-10)', getVal('prepared'));
+    y += 4;
+
+    // === STEP 4: Family History ===
+    addSection('Family History');
+    const familyMembers = ['mother', 'father', 'brother', 'sister', 'child1', 'child2', 'child3', 'child4', 'maGma', 'maGpa', 'paGma', 'paGpa', 'aunt', 'uncle'];
+    const conditionNames = {
+      cancer: 'Cancer', heartDisease: 'Heart Disease', hypertension: 'Hypertension',
+      obesity: 'Obesity', diabetes: 'Diabetes', stroke: 'Stroke', autoimmune: 'Autoimmune',
+      arthritis: 'Arthritis', kidneyDisease: 'Kidney Disease', thyroid: 'Thyroid',
+      seizures: 'Seizures', psychiatric: 'Psychiatric', anxiety: 'Anxiety',
+      depression: 'Depression', asthma: 'Asthma', allergies: 'Allergies', eczema: 'Eczema',
+      adhd: 'ADHD', autism: 'Autism', ibs: 'IBS', dementia: 'Dementia',
+      substanceAbuse: 'Substance Abuse', genetic: 'Genetic', celiac: 'Celiac'
+    };
+    const memberDisplayNames = {
+      mother: 'Mother', father: 'Father', brother: 'Brother', sister: 'Sister',
+      child1: 'Child 1', child2: 'Child 2', child3: 'Child 3', child4: 'Child 4',
+      maGma: 'Maternal Grandmother', maGpa: 'Maternal Grandfather',
+      paGma: 'Paternal Grandmother', paGpa: 'Paternal Grandfather',
+      aunt: 'Aunt', uncle: 'Uncle'
+    };
+
+    familyMembers.forEach(member => {
+      const conds = [];
+      Object.keys(conditionNames).forEach(cond => {
+        if (getChecked(`${cond}_${member}`)) conds.push(conditionNames[cond]);
+      });
+      const age = getVal(`age_${member}`);
+      const death = getVal(`death_${member}`);
+      if (conds.length || age || death) {
+        let info = conds.join(', ') || 'No conditions checked';
+        if (age) info += ` | Age: ${age}`;
+        if (death) info += ` | Deceased: ${death}`;
+        addField(memberDisplayNames[member] || member, info);
+      }
+    });
+    y += 4;
+
+    // === STEPS 5-7: Metabolic Assessment ===
+    addSection('Metabolic Assessment');
+    const categories = [
+      { name: 'Digestion - Colon', qs: [1, 10] },
+      { name: 'Upper Digestion - Stomach', qs: [11, 16] },
+      { name: 'Upper Digestion - HCL/Enzymes', qs: [17, 23] },
+      { name: 'Pancreas/Blood Sugar', qs: [24, 31] },
+      { name: 'Liver/Gallbladder', qs: [32, 42] },
+      { name: 'Hypoglycemia', qs: [44, 52] },
+      { name: 'Insulin Resistance', qs: [53, 60] },
+      { name: 'Adrenal - Hypo', qs: [61, 68] },
+      { name: 'Adrenal - Hyper', qs: [69, 74] },
+      { name: 'Thyroid - Hypo', qs: [75, 86] },
+      { name: 'Thyroid - Hyper', qs: [87, 93] },
+      { name: 'Endocrine - General', qs: [94, 99] },
+      { name: 'Cardiovascular', qs: [100, 106] },
+      { name: 'Immune/Inflammation', qs: [107, 115] }
+    ];
+
+    let grandTotal = 0;
+    categories.forEach(cat => {
+      let subtotal = 0;
+      const responses = [];
+      for (let q = cat.qs[0]; q <= cat.qs[1]; q++) {
+        const val = parseInt(getVal(`q${q}`)) || 0;
+        subtotal += val;
+        if (val > 0 && METABOLIC_QUESTIONS[`q${q}`]) {
+          responses.push(`${METABOLIC_QUESTIONS['q' + q]}: ${val}`);
+        }
+      }
+      grandTotal += subtotal;
+      if (subtotal > 0) {
+        checkPage(10);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(51, 51, 51);
+        pdf.text(`${cat.name} (Score: ${subtotal})`, M.left, y);
+        y += 5;
+        if (responses.length) {
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(80, 80, 80);
+          responses.forEach(r => {
+            checkPage(4.5);
+            const lines = pdf.splitTextToSize(r, CONTENT_W - 8);
+            lines.forEach(line => {
+              pdf.text(line, M.left + 4, y);
+              y += 4;
+            });
+          });
+        }
+        y += 3;
+      }
+    });
+
+    checkPage(10);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(26, 155, 160);
+    pdf.text(`Grand Total: ${grandTotal}`, M.left, y);
+    y += 6;
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(this.interpretMetabolicScore(grandTotal), M.left, y);
+    y += 8;
+
+    // Gallbladder
+    const gb = form.querySelector('[name="gallbladder_removed"]:checked');
+    if (gb && gb.value === 'yes') addField('Gallbladder Removed', 'Yes');
+
+    console.log('Text-based PDF generated successfully');
+    return pdf.output('blob');
+  },
+
+  /**
    * Generate PDF of the complete form using off-screen clone.
    * Clones the form card, copies all input values, renders off-screen
    * to avoid overlay occlusion and animation issues.
@@ -970,13 +1270,27 @@ const IntakeWizard = {
     }, TIMEOUT_MS);
 
     try {
-      // Generate PDF and upload to Vercel Blob (non-blocking - form submits even if this fails)
+      // Generate PDF and upload to Vercel Blob
       try {
         console.log('Generating PDF of intake form...');
-        const pdfBlob = await this.generateFormPDF();
+        let pdfBlob = null;
+
+        // Try html2canvas rendering with a 30-second timeout
+        try {
+          pdfBlob = await Promise.race([
+            this.generateFormPDF(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Canvas PDF timed out after 30s')), 30000))
+          ]);
+          if (!pdfBlob) throw new Error('Canvas PDF returned null (blank render)');
+          console.log('Canvas PDF generated, size:', Math.round(pdfBlob.size / 1024), 'KB');
+        } catch (canvasErr) {
+          console.warn('Canvas PDF failed, using text fallback:', canvasErr.message);
+          this.updateLoadingMessage('Generating PDF (text mode)...');
+          pdfBlob = this.generateTextPDF();
+          console.log('Text PDF generated, size:', Math.round(pdfBlob.size / 1024), 'KB');
+        }
 
         if (pdfBlob && !timedOut) {
-          console.log('PDF generated, size:', Math.round(pdfBlob.size / 1024), 'KB');
           this.updateLoadingMessage('Uploading PDF...');
 
           const lastName = (this.form.querySelector('[name="lastName"]')?.value || 'patient').trim();
@@ -995,7 +1309,6 @@ const IntakeWizard = {
           window._intakeWizardPDFUrl = url;
           window._intakeWizardPDFFailed = false;
         } else {
-          // generateFormPDF returned null (blank after retries)
           window._intakeWizardPDFUrl = null;
           window._intakeWizardPDFFailed = true;
         }
