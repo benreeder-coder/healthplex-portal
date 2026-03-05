@@ -939,7 +939,7 @@ const IntakeWizard = {
     pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(80, 80, 80);
-    pdf.text(this.interpretMetabolicScore(grandTotal), M.left, y);
+    pdf.text(this.getScoreInterpretation(grandTotal), M.left, y);
     y += 8;
 
     // Gallbladder
