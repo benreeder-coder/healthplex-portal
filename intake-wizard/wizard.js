@@ -1185,8 +1185,16 @@ const IntakeWizard = {
       for (let page = 0; page < totalPages; page++) {
         if (page > 0) pdf.addPage();
 
+        // Update loading overlay with per-page progress
+        if (typeof this.updateLoadingMessage === 'function') {
+          this.updateLoadingMessage(`Rendering page ${page + 1} of ${totalPages}...`);
+        }
+
         const srcY = page * pageHeightSrc;
         const srcH = Math.min(pageHeightSrc, cloneHeight - srcY);
+
+        // Yield to UI thread so progress message paints
+        await new Promise(r => setTimeout(r, 0));
 
         // Render just this page's vertical strip
         const pageCanvas = await html2canvas(clone, {
@@ -1346,11 +1354,11 @@ const IntakeWizard = {
         console.log('Generating PDF of intake form...');
         let pdfBlob = null;
 
-        // Try html2canvas rendering with a 30-second timeout
+        // Try html2canvas rendering with a 60-second timeout
         try {
           pdfBlob = await Promise.race([
             this.generateFormPDF(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Canvas PDF timed out after 30s')), 30000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Canvas PDF timed out after 60s')), 60000))
           ]);
           if (!pdfBlob) throw new Error('Canvas PDF returned null (blank render)');
           console.log('Canvas PDF generated, size:', Math.round(pdfBlob.size / 1024), 'KB');
