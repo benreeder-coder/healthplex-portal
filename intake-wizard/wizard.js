@@ -1153,7 +1153,7 @@ const IntakeWizard = {
     await new Promise(resolve => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setTimeout(resolve, 500);
+          setTimeout(resolve, 100);
         });
       });
     });
@@ -1167,7 +1167,7 @@ const IntakeWizard = {
     const A4_H = 297; // mm
     const CONTENT_W = A4_W - MARGIN[1] - MARGIN[3]; // 194 mm
     const CONTENT_H = A4_H - MARGIN[0] - MARGIN[2]; // 277 mm
-    const SCALE = 2;
+    const SCALE = 1.5;
     const WINDOW_W = 700;
 
     try {
@@ -1231,7 +1231,7 @@ const IntakeWizard = {
           }
         }
 
-        const imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+        const imgData = pageCanvas.toDataURL('image/jpeg', 0.85);
         const sliceHeightMm = (pageCanvas.height / pxPerMm);
         pdf.addImage(imgData, 'JPEG', MARGIN[3], MARGIN[0], CONTENT_W, sliceHeightMm);
       }
@@ -1340,8 +1340,8 @@ const IntakeWizard = {
     const submitBtn = this.form.querySelector('.wizard-nav-submit');
     if (submitBtn) submitBtn.disabled = true;
 
-    // Timeout protection - 90 seconds max wait (PDF generation renders each page individually)
-    const TIMEOUT_MS = 90000;
+    // Timeout protection - 120 seconds max wait (PDF generation renders each page individually)
+    const TIMEOUT_MS = 120000;
     let timedOut = false;
     const timeoutId = setTimeout(() => {
       timedOut = true;
