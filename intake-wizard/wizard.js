@@ -1182,48 +1182,50 @@ const IntakeWizard = {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) pdf.addPage();
+      // Render in chunks of PAGES_PER_CHUNK pages to minimize html2canvas DOM walks.
+      // Each call re-parses the full DOM; fewer calls = dramatically faster.
+      const PAGES_PER_CHUNK = 5;
+      const totalChunks = Math.ceil(totalPages / PAGES_PER_CHUNK);
+      let pageIndex = 0;
 
-        // Update loading overlay with per-page progress
+      for (let chunk = 0; chunk < totalChunks; chunk++) {
+        const chunkStartPage = chunk * PAGES_PER_CHUNK;
+        const chunkPageCount = Math.min(PAGES_PER_CHUNK, totalPages - chunkStartPage);
+        const chunkSrcY = chunkStartPage * pageHeightSrc;
+        const chunkSrcH = Math.min(chunkPageCount * pageHeightSrc, cloneHeight - chunkSrcY);
+
         if (typeof this.updateLoadingMessage === 'function') {
-          this.updateLoadingMessage(`Rendering page ${page + 1} of ${totalPages}...`);
+          this.updateLoadingMessage(`Rendering pages ${chunkStartPage + 1}-${chunkStartPage + chunkPageCount} of ${totalPages}...`);
         }
-
-        const srcY = page * pageHeightSrc;
-        const srcH = Math.min(pageHeightSrc, cloneHeight - srcY);
-
-        // Yield to UI thread so progress message paints
         await new Promise(r => setTimeout(r, 0));
 
-        // Render just this page's vertical strip
-        const pageCanvas = await html2canvas(clone, {
+        const chunkCanvas = await html2canvas(clone, {
           scale: SCALE,
           useCORS: true,
           logging: false,
           windowWidth: WINDOW_W,
-          y: srcY,
-          height: srcH,
+          y: chunkSrcY,
+          height: chunkSrcH,
           width: WINDOW_W,
           scrollY: 0,
           scrollX: 0,
           x: 0
         });
 
-        // Pixel verification on first page only
-        if (page === 0) {
+        // Pixel verification on first chunk only
+        if (chunk === 0) {
           try {
-            const ctx = pageCanvas.getContext('2d');
-            const sample = ctx.getImageData(0, 0, Math.min(200, pageCanvas.width), Math.min(200, pageCanvas.height));
+            const ctx = chunkCanvas.getContext('2d');
+            const sample = ctx.getImageData(0, 0, Math.min(200, chunkCanvas.width), Math.min(200, chunkCanvas.height));
             const px = sample.data;
             let colored = 0;
             for (let i = 0; i < px.length; i += 4) {
               if (px[i] < 245 || px[i + 1] < 245 || px[i + 2] < 245) colored++;
             }
             const ratio = colored / (px.length / 4);
-            console.log(`Page 1 canvas ${pageCanvas.width}x${pageCanvas.height}, ${(ratio * 100).toFixed(1)}% colored`);
+            console.log(`Chunk 1 canvas ${chunkCanvas.width}x${chunkCanvas.height}, ${(ratio * 100).toFixed(1)}% colored`);
             if (ratio < 0.01) {
-              console.error('First page canvas appears blank');
+              console.error('First chunk canvas appears blank');
               return null;
             }
           } catch (e) {
@@ -1231,9 +1233,24 @@ const IntakeWizard = {
           }
         }
 
-        const imgData = pageCanvas.toDataURL('image/jpeg', 0.85);
-        const sliceHeightMm = (pageCanvas.height / pxPerMm);
-        pdf.addImage(imgData, 'JPEG', MARGIN[3], MARGIN[0], CONTENT_W, sliceHeightMm);
+        // Slice chunk canvas into individual pages
+        const scaledPageH = Math.round(pageHeightSrc * SCALE);
+        for (let p = 0; p < chunkPageCount; p++) {
+          if (pageIndex > 0) pdf.addPage();
+          const sliceY = p * scaledPageH;
+          const sliceH = Math.min(scaledPageH, chunkCanvas.height - sliceY);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = chunkCanvas.width;
+          sliceCanvas.height = sliceH;
+          sliceCanvas.getContext('2d').drawImage(
+            chunkCanvas, 0, sliceY, chunkCanvas.width, sliceH,
+            0, 0, chunkCanvas.width, sliceH
+          );
+          const imgData = sliceCanvas.toDataURL('image/jpeg', 0.85);
+          const sliceHeightMm = sliceH / pxPerMm;
+          pdf.addImage(imgData, 'JPEG', MARGIN[3], MARGIN[0], CONTENT_W, sliceHeightMm);
+          pageIndex++;
+        }
       }
 
       return pdf.output('blob');
