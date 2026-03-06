@@ -889,9 +889,7 @@ const IntakeWizard = {
       { name: 'Adrenal - Hyper', qs: [69, 74] },
       { name: 'Thyroid - Hypo', qs: [75, 86] },
       { name: 'Thyroid - Hyper', qs: [87, 93] },
-      { name: 'Endocrine - General', qs: [94, 99] },
-      { name: 'Cardiovascular', qs: [100, 106] },
-      { name: 'Immune/Inflammation', qs: [107, 115] }
+      { name: 'Endocrine - General', qs: [94, 99] }
     ];
 
     let grandTotal = 0;
@@ -930,6 +928,45 @@ const IntakeWizard = {
       }
     });
 
+    // Gender-specific hormone categories
+    const sex = getVal('sex');
+    if (sex === 'male' || sex === 'female') {
+      const genderQuestions = sex === 'male' ? MALE_QUESTIONS : FEMALE_QUESTIONS;
+      const genderLabel = sex === 'male' ? 'Male Hormones' : 'Female Hormones';
+      let genderSubtotal = 0;
+      const genderResponses = [];
+      for (const [qId, qText] of Object.entries(genderQuestions)) {
+        const val = parseInt(getVal(qId)) || 0;
+        genderSubtotal += val;
+        if (val > 0) {
+          genderResponses.push(`${qText}: ${val}`);
+        }
+      }
+      grandTotal += genderSubtotal;
+      if (genderSubtotal > 0) {
+        checkPage(10);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(51, 51, 51);
+        pdf.text(`${genderLabel} (Score: ${genderSubtotal})`, M.left, y);
+        y += 5;
+        if (genderResponses.length) {
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(80, 80, 80);
+          genderResponses.forEach(r => {
+            checkPage(4.5);
+            const lines = pdf.splitTextToSize(r, CONTENT_W - 8);
+            lines.forEach(line => {
+              pdf.text(line, M.left + 4, y);
+              y += 4;
+            });
+          });
+        }
+        y += 3;
+      }
+    }
+
     checkPage(10);
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
@@ -948,16 +985,17 @@ const IntakeWizard = {
 
     // === STEP 8: Lifestyle, Medications & Review ===
     addSection('Lifestyle & Diet');
-    addField('Alcohol / week', getVal('alcoholPerWeek'));
-    addField('Caffeine / day', getVal('caffeinePerDay'));
-    addField('Eat out / week', getVal('eatOutPerWeek'));
-    addField('Work out / week', getVal('workOutPerWeek'));
-    addField('Stress level (1-10)', getVal('stressLevel'));
+    addField('Alcohol / week', getVal('alcohol_per_week'));
+    addField('Caffeine / day', getVal('caffeine_per_day'));
+    addField('Eat out / week', getVal('eat_out_per_week'));
+    addField('Work out / week', getVal('workout_per_week'));
+    const stressRadio = form.querySelector('[name="stress_level"]:checked');
+    addField('Stress level (1-10)', stressRadio ? stressRadio.value : '');
     const smoke = form.querySelector('[name="smoke"]:checked');
     if (smoke) addField('Smoker', smoke.value === 'yes' ? 'Yes' : 'No');
-    const worstFoods = [getVal('worstFood1'), getVal('worstFood2'), getVal('worstFood3')].filter(Boolean);
+    const worstFoods = [getVal('worst_food_1'), getVal('worst_food_2'), getVal('worst_food_3')].filter(Boolean);
     if (worstFoods.length) addField('Worst foods', worstFoods.join(', '));
-    const healthyFoods = [getVal('healthyFood1'), getVal('healthyFood2'), getVal('healthyFood3')].filter(Boolean);
+    const healthyFoods = [getVal('healthy_food_1'), getVal('healthy_food_2'), getVal('healthy_food_3')].filter(Boolean);
     if (healthyFoods.length) addField('Healthiest foods', healthyFoods.join(', '));
     y += 4;
 
@@ -1021,20 +1059,14 @@ const IntakeWizard = {
     offscreen.style.cssText = 'position: absolute; left: 0; top: 0; width: 700px; z-index: -1; overflow: visible;';
     offscreen.appendChild(clone);
 
-    // 4. In the clone: show steps 1-7, hide step 8, hide UI chrome
+    // 4. In the clone: show ALL steps (including step 8 lifestyle/meds fields)
     const cloneSteps = clone.querySelectorAll('.wizard-step');
-    cloneSteps.forEach((step, idx) => {
-      if (idx < cloneSteps.length - 1) {
-        step.classList.add('active');
-        step.style.display = 'block';
-        // Force inline styles to bypass CSS animation race condition
-        // (wizardFadeIn starts at opacity:0 - inline styles override it immediately)
-        step.style.opacity = '1';
-        step.style.animation = 'none';
-        step.style.transform = 'none';
-      } else {
-        step.style.display = 'none';
-      }
+    cloneSteps.forEach((step) => {
+      step.classList.add('active');
+      step.style.display = 'block';
+      step.style.opacity = '1';
+      step.style.animation = 'none';
+      step.style.transform = 'none';
     });
 
     // Hide navigation, progress bars, review elements in clone
@@ -1095,6 +1127,23 @@ const IntakeWizard = {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
+      #pdf-offscreen-container .severity-scale {
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+      }
+      #pdf-offscreen-container .severity-scale label {
+        width: auto !important;
+        min-width: 28px !important;
+        padding: 4px 8px !important;
+        font-size: 9px !important;
+      }
+      #pdf-offscreen-container .symptom-row {
+        padding: 4px 0 !important;
+      }
+      #pdf-offscreen-container .category-section {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+      }
     `;
     document.head.appendChild(pdfStyle);
 
@@ -1128,6 +1177,7 @@ const IntakeWizard = {
       const cloneHeight = clone.scrollHeight;
       const totalPages = Math.ceil(cloneHeight / pageHeightSrc);
       console.log(`PDF: ${totalPages} pages, clone ${WINDOW_W}x${cloneHeight}, pageHeightSrc=${pageHeightSrc}`);
+      if (totalPages > 30) console.warn(`PDF clone very tall: ${cloneHeight}px, ${totalPages} pages — may truncate`);
 
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
